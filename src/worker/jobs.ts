@@ -11,7 +11,7 @@ import {
 } from "@/lib/repo";
 import { getSettings } from "@/lib/settings";
 import { transcribe } from "@/lib/transcribe";
-import type { Analysis, Job } from "@/lib/types";
+import type { Job } from "@/lib/types";
 
 function reporter(job: Job) {
   let last = 0;
@@ -75,7 +75,7 @@ async function analyze(job: Job, signal: AbortSignal) {
   });
 
   if (settings.autoTranscribe && analysis.sermon) {
-    updateSermon(sermon.id, { engine: sermon.engine ?? settings.defaultEngine });
+    updateSermon(sermon.id, { engine: "local" });
     setStatus(sermon.id, "transcribing");
     enqueue(sermon.id, "transcribe");
   } else {
@@ -89,15 +89,11 @@ async function runTranscription(job: Job, signal: AbortSignal) {
   const settings = getSettings();
   setStatus(sermon.id, "transcribing");
 
-  const analysis = JSON.parse(fs.readFileSync(files.analysis, "utf8")) as Analysis;
   const segments = await transcribe({
     source: sermon.source_path!,
     start: sermon.trim_start ?? 0,
     end: sermon.trim_end ?? sermon.duration!,
-    engine: sermon.engine ?? settings.defaultEngine,
     settings,
-    energyDb: analysis.energyDb,
-    regions: analysis.regions,
     workDir: files.work,
     onProgress: reporter(job),
     signal,

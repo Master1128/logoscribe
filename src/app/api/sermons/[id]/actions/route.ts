@@ -1,5 +1,4 @@
 import { activeJob, cancelJob, enqueue, getBlocks, getSegments, getSermon, lastJob, setStatus, updateSermon } from "@/lib/repo";
-import { getSettings } from "@/lib/settings";
 
 /** transcribe | reformat | retrim | reanalyze | retry | cancel */
 export async function POST(request: Request, ctx: RouteContext<"/api/sermons/[id]/actions">) {
@@ -25,7 +24,7 @@ export async function POST(request: Request, ctx: RouteContext<"/api/sermons/[id
       if (sermon.trim_start === null || sermon.trim_end === null) {
         return Response.json({ error: "Primero confirma el inicio y el final de la prédica" }, { status: 400 });
       }
-      if (!sermon.engine) updateSermon(id, { engine: getSettings().defaultEngine });
+      updateSermon(id, { engine: "local" });
       setStatus(id, "transcribing");
       enqueue(id, "transcribe");
       break;

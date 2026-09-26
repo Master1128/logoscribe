@@ -1,4 +1,4 @@
-import type { Block, EngineId, Job, Sermon, SermonStatus } from "./types";
+import type { Block, Job, Sermon, SermonStatus } from "./types";
 import type { BibleRef } from "./bible";
 
 export { formatTime, formatDate } from "./export/common";
@@ -12,12 +12,6 @@ export const STATUS_LABEL: Record<SermonStatus, string> = {
   formatting: "Organizando texto",
   ready: "Lista",
   failed: "Con error",
-};
-
-export const ENGINE_LABEL: Record<EngineId, string> = {
-  local: "En este computador (gratis)",
-  openai: "Whisper en la nube (OpenAI o compatible)",
-  groq: "Groq Whisper (nube, muy rápido)",
 };
 
 export const PROCESSING: SermonStatus[] = ["importing", "uploaded", "analyzing", "transcribing", "formatting"];

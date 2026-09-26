@@ -1,12 +1,20 @@
 import fs from "node:fs";
-import { getSettings, saveSettings, secretStatus } from "@/lib/settings";
+import { PROVIDERS, type ProviderId } from "@/lib/providers";
+import { apiKeyHints, getSettings, saveSettings, setApiKey } from "@/lib/settings";
 
-export async function GET() {
+function payload() {
   const settings = getSettings();
-  return Response.json({ settings, secrets: secretStatus(), localModelFound: fs.existsSync(settings.localModelPath) });
+  return { settings, apiKeys: apiKeyHints(), localModelFound: fs.existsSync(settings.localModelPath) };
 }
 
+export async function GET() {
+  return Response.json(payload());
+}
+
+/** Body: settings to change, plus an optional { apiKey: { provider, key } } (key null clears it). */
 export async function PUT(request: Request) {
-  saveSettings(await request.json());
-  return GET();
+  const { apiKey, ...patch } = await request.json();
+  saveSettings(patch);
+  if (apiKey && apiKey.provider in PROVIDERS) setApiKey(apiKey.provider as ProviderId, apiKey.key || null);
+  return Response.json(payload());
 }

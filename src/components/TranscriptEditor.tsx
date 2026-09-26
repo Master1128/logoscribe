@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { findBibleRefs, uniqueRefs } from "@/lib/bible";
-import { api, ENGINE_LABEL, formatTime, type SermonPayload } from "@/lib/ui";
+import { api, formatTime, type SermonPayload } from "@/lib/ui";
 import type { Block, Sermon } from "@/lib/types";
 
 type EditableBlock = Block & { key: string };
@@ -230,7 +230,7 @@ export function TranscriptEditor({
             <h3 className="label">Proceso</h3>
             <p className="text-muted">
               Recorte {formatTime(sermon.trim_start)} – {formatTime(sermon.trim_end)}
-              {sermon.engine && <><br />{ENGINE_LABEL[sermon.engine]}</>}
+              <br />Whisper en este computador
             </p>
             <div className="flex flex-col gap-1.5 pt-1">
               <button

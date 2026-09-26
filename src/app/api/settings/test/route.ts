@@ -1,15 +1,12 @@
-import path from "node:path";
-import { DATA_DIR } from "@/lib/paths";
 import { getSettings } from "@/lib/settings";
-import { testEngine } from "@/lib/transcribe";
-import type { EngineId } from "@/lib/types";
+import { checkLocalEngine } from "@/lib/transcribe";
 
-export async function POST(request: Request) {
-  const { engine } = (await request.json()) as { engine: EngineId };
-  if (!["openai", "groq", "local"].includes(engine)) return Response.json({ error: "Motor desconocido" }, { status: 400 });
+/** Checks whisper.cpp and the active model are ready on this computer. */
+export async function POST() {
   try {
-    return Response.json(await testEngine(engine, getSettings(), path.join(DATA_DIR, "tmp")));
+    checkLocalEngine(getSettings());
+    return Response.json({ ok: true });
   } catch (err) {
-    return Response.json({ ok: false, error: (err as Error).message }, { status: 200 });
+    return Response.json({ ok: false, error: (err as Error).message });
   }
 }

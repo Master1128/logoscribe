@@ -21,7 +21,7 @@ async function drain() {
 
 async function main() {
   const [audio, model] = process.argv.slice(2);
-  saveSettings({ localModelPath: model, formatter: "heuristic", minSermonMinutes: 0.5 });
+  saveSettings({ localModelPath: model, organizerProvider: "basic", minSermonMinutes: 0.5 });
   const s = createSermon({ title: "El amor de Dios", preacher: "Pastor de prueba", series: "Fundamentos", service_date: "2026-09-20", source_name: path.basename(audio) });
   fs.mkdirSync(sermonFiles(s.id).dir, { recursive: true });
   const src = path.join(sermonFiles(s.id).dir, "source" + path.extname(audio));

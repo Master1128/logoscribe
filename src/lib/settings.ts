@@ -1,21 +1,21 @@
 import path from "node:path";
 import { db } from "./db";
 import { DATA_DIR } from "./paths";
-import type { EngineId } from "./types";
+import { PROVIDERS, type ProviderId } from "./providers";
 
-/** Non-secret preferences, editable from the Ajustes page. API keys stay in env vars. */
+/** Preferences editable from the Ajustes page. */
 export interface Settings {
-  defaultEngine: EngineId;
-  openaiModel: string;
-  groqModel: string;
   localModelPath: string;
   /** Silero VAD model; when present, Whisper only decodes detected speech. */
   localVadModelPath: string;
   localThreads: number;
   /** Vocabulary hint given to the recognizer (names, biblical terms). */
   vocabularyPrompt: string;
-  formatter: "claude" | "heuristic";
-  claudeModel: string;
+  /** "basic" organizes paragraphs locally; any other value is an AI provider. */
+  organizerProvider: "basic" | ProviderId;
+  organizerModel: string;
+  /** Only used by the "custom" provider (Ollama, LiteLLM, …). */
+  organizerBaseUrl: string;
   addHeadings: boolean;
   autoTranscribe: boolean;
   /** Shortest speech run proposed as the sermon by the detector. */
@@ -23,9 +23,6 @@ export interface Settings {
 }
 
 export const DEFAULT_SETTINGS: Settings = {
-  defaultEngine: "local",
-  openaiModel: "whisper-1",
-  groqModel: "whisper-large-v3",
   localModelPath: path.join(DATA_DIR, "models", "ggml-large-v3-turbo.bin"),
   localVadModelPath: path.join(DATA_DIR, "models", "ggml-silero-v5.1.2.bin"),
   localThreads: 6,
@@ -33,17 +30,20 @@ export const DEFAULT_SETTINGS: Settings = {
     "Prédica cristiana en español. Jesucristo, Espíritu Santo, Dios Padre, aleluya, amén, gloria a Dios, " +
     "versículo, capítulo, Génesis, Éxodo, Salmos, Proverbios, Isaías, Mateo, Marcos, Lucas, Juan, Hechos, " +
     "Romanos, Corintios, Gálatas, Efesios, Filipenses, Hebreos, Apocalipsis.",
-  formatter: "claude",
-  claudeModel: "claude-opus-5",
+  organizerProvider: "basic",
+  organizerModel: "",
+  organizerBaseUrl: "",
   addHeadings: true,
   autoTranscribe: false,
   minSermonMinutes: 8,
 };
 
 export function getSettings(): Settings {
-  const rows = db().prepare("SELECT key, value FROM settings").all() as { key: string; value: string }[];
+  const rows = db().prepare("SELECT key, value FROM settings WHERE key NOT LIKE 'apiKey:%'").all() as { key: string; value: string }[];
   const stored = Object.fromEntries(rows.map((r) => [r.key, JSON.parse(r.value)]));
-  return { ...DEFAULT_SETTINGS, ...stored };
+  const settings = { ...DEFAULT_SETTINGS, ...stored } as Settings;
+  if (settings.organizerProvider !== "basic" && !PROVIDERS[settings.organizerProvider]) settings.organizerProvider = "basic";
+  return settings;
 }
 
 export function saveSettings(patch: Partial<Settings>) {
@@ -55,19 +55,34 @@ export function saveSettings(patch: Partial<Settings>) {
   }
 }
 
-export const secrets = {
-  openai: () => process.env.OPENAI_API_KEY,
-  openaiBaseUrl: () => process.env.OPENAI_BASE_URL || undefined,
-  groq: () => process.env.GROQ_API_KEY,
-  anthropic: () => process.env.ANTHROPIC_API_KEY,
-};
+// ---------------------------------------------------------------- API keys
 
-export function secretStatus() {
-  return {
-    openai: Boolean(secrets.openai()),
-    /** Host only, so the page can say which server is used without exposing anything else. */
-    openaiHost: (() => { try { return new URL(secrets.openaiBaseUrl() ?? "https://api.openai.com").host; } catch { return null; } })(),
-    groq: Boolean(secrets.groq()),
-    anthropic: Boolean(secrets.anthropic()),
-  };
+/**
+ * Each provider's key lives in this computer's local database (Logoscribe
+ * runs only on localhost), so volunteers can paste it in Ajustes instead of
+ * editing files. An environment variable still works as a fallback.
+ */
+export function getApiKey(provider: ProviderId): string | undefined {
+  const row = db().prepare("SELECT value FROM settings WHERE key = ?").get(`apiKey:${provider}`) as { value: string } | undefined;
+  const stored = row ? (JSON.parse(row.value) as string) : "";
+  return stored || process.env[PROVIDERS[provider].envVar] || undefined;
+}
+
+export function setApiKey(provider: ProviderId, key: string | null) {
+  if (key) {
+    db().prepare("INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value")
+      .run(`apiKey:${provider}`, JSON.stringify(key.trim()));
+  } else {
+    db().prepare("DELETE FROM settings WHERE key = ?").run(`apiKey:${provider}`);
+  }
+}
+
+/** What the page may know about saved keys: whether there is one, and its last characters. */
+export function apiKeyHints(): Record<ProviderId, string | null> {
+  return Object.fromEntries(
+    (Object.keys(PROVIDERS) as ProviderId[]).map((p) => {
+      const key = getApiKey(p);
+      return [p, key ? `…${key.slice(-4)}` : null];
+    }),
+  ) as Record<ProviderId, string | null>;
 }

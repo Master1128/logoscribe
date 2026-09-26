@@ -90,6 +90,8 @@ function migrate(conn: DatabaseSync) {
   // The in-browser engine was removed: send its sermons back to review.
   conn.exec(`UPDATE sermons SET status = CASE WHEN status = 'transcribing' THEN 'review' ELSE status END, engine = NULL
              WHERE engine = 'browser'`);
+  // Notes from the old Claude-only organizer are obsolete now that the basic one is the default.
+  conn.exec(`UPDATE sermons SET error = NULL WHERE status = 'ready' AND error LIKE 'Falta ANTHROPIC_API_KEY%'`);
 }
 
 export function tx<T>(fn: () => T): T {

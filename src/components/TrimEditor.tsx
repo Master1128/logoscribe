@@ -3,8 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import type WaveSurfer from "wavesurfer.js";
 import type { Region as WsRegion } from "wavesurfer.js/dist/plugins/regions.esm.js";
-import { api, ENGINE_LABEL, formatTime } from "@/lib/ui";
-import type { EngineId, Region, Sermon } from "@/lib/types";
+import Link from "next/link";
+import { api, formatTime } from "@/lib/ui";
+import type { Region, Sermon } from "@/lib/types";
 
 interface Waveform {
   duration: number;
@@ -13,10 +14,9 @@ interface Waveform {
   sermon: { start: number; end: number } | null;
 }
 
-interface SettingsPayload {
-  settings: { defaultEngine: EngineId };
-  secrets: { openai: boolean; groq: boolean };
-  localModelFound: boolean;
+interface Readiness {
+  ok: boolean;
+  error?: string;
 }
 
 const NICE_STEPS = [1, 2, 5, 10, 15, 30, 60, 120, 300, 600, 900, 1800, 3600];
@@ -52,16 +52,12 @@ export function TrimEditor({ sermon, onChange }: { sermon: Sermon; onChange: () 
   const [playing, setPlaying] = useState(false);
   const [time, setTime] = useState(0);
   const [zoom, setZoom] = useState(0);
-  const [engines, setEngines] = useState<SettingsPayload | null>(null);
-  const [engine, setEngine] = useState<EngineId | null>(sermon.engine);
+  const [ready, setReady] = useState<Readiness | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    api<SettingsPayload>("/api/settings").then((s) => {
-      setEngines(s);
-      setEngine((e) => e ?? s.settings.defaultEngine);
-    });
+    api<Readiness>("/api/settings/test", { method: "POST" }).then(setReady);
   }, []);
 
   useEffect(() => {
@@ -177,7 +173,7 @@ export function TrimEditor({ sermon, onChange }: { sermon: Sermon; onChange: () 
     try {
       await api(`/api/sermons/${sermon.id}`, {
         method: "PATCH",
-        body: JSON.stringify({ trim_start: range.start, trim_end: range.end, engine }),
+        body: JSON.stringify({ trim_start: range.start, trim_end: range.end }),
       });
       await api(`/api/sermons/${sermon.id}/actions`, { method: "POST", body: JSON.stringify({ action: "transcribe" }) });
       onChange();
@@ -187,9 +183,6 @@ export function TrimEditor({ sermon, onChange }: { sermon: Sermon; onChange: () 
     }
   }
 
-  const available = (id: EngineId) =>
-    !engines ? true : id === "local" ? engines.localModelFound : engines.secrets[id];
-  const missing = (id: EngineId) => (id === "local" ? " — descarga un modelo en Ajustes" : " — falta la clave");
 
   return (
     <div className="space-y-4">
@@ -250,20 +243,15 @@ export function TrimEditor({ sermon, onChange }: { sermon: Sermon; onChange: () 
       </div>
 
       <div className="card flex flex-wrap items-end gap-4 p-4">
-        <div className="min-w-64 flex-1">
-          <label className="label" htmlFor="engine">Motor de transcripción</label>
-          <select id="engine" className="input" value={engine ?? ""} onChange={(e) => setEngine(e.target.value as EngineId)}>
-            {(Object.keys(ENGINE_LABEL) as EngineId[]).map((id) => (
-              <option key={id} value={id} disabled={!available(id)}>
-                {ENGINE_LABEL[id]}{available(id) ? "" : missing(id)}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="text-sm text-muted">
+        {ready && !ready.ok && (
+          <p className="w-full rounded-lg bg-gold-soft px-3 py-2 text-sm text-gold">
+            {ready.error} <Link href="/ajustes" className="underline">Ir a Ajustes</Link>
+          </p>
+        )}
+        <div className="flex-1 text-sm text-muted">
           Duración a transcribir: <strong className="text-ink">{formatTime(range.end - range.start)}</strong>
         </div>
-        <button className="btn-primary" onClick={transcribe} disabled={saving || !wave || !engine || !available(engine)}>
+        <button className="btn-primary" onClick={transcribe} disabled={saving || !wave || ready?.ok === false}>
           {saving ? "Enviando…" : "Transcribir esta parte"}
         </button>
       </div>

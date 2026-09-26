@@ -2,42 +2,29 @@
 
 import { useEffect, useState } from "react";
 import { ModelManager } from "./ModelManager";
-import { api, ENGINE_LABEL } from "@/lib/ui";
+import { api } from "@/lib/ui";
+import { PROVIDERS, type ProviderId } from "@/lib/providers";
 import type { Settings } from "@/lib/settings";
-import type { EngineId } from "@/lib/types";
 
 interface Payload {
   settings: Settings;
-  secrets: { openai: boolean; openaiHost: string | null; groq: boolean; anthropic: boolean };
+  apiKeys: Record<ProviderId, string | null>;
   localModelFound: boolean;
 }
 
+type Result = { ok: boolean; text: string } | null;
 
-function Key({ ok, name }: { ok: boolean; name: string }) {
-  return (
-    <span className={`rounded px-1.5 py-0.5 text-xs font-medium ${ok ? "bg-ok/10 text-ok" : "bg-danger/10 text-danger"}`}>
-      {ok ? `${name} configurada` : `Falta ${name}`}
-    </span>
-  );
-}
-
-function TestButton({ engine, disabled }: { engine: EngineId; disabled?: boolean }) {
-  const [state, setState] = useState<{ busy: boolean; result: string | null; ok?: boolean }>({ busy: false, result: null });
+function LocalTestButton() {
+  const [result, setResult] = useState<Result>(null);
   async function test() {
-    setState({ busy: true, result: null });
-    type Result = { ok: boolean; ms?: number; error?: string };
-    const r: Result = await api<Result>("/api/settings/test", {
-      method: "POST",
-      body: JSON.stringify({ engine }),
-    }).catch((e): Result => ({ ok: false, error: (e as Error).message }));
-    setState({ busy: false, ok: r.ok, result: r.ok ? `Funciona${r.ms ? ` (${(r.ms / 1000).toFixed(1)} s)` : ""}` : r.error ?? "Error" });
+    const r = await api<{ ok: boolean; error?: string }>("/api/settings/test", { method: "POST" })
+      .catch((e): { ok: boolean; error?: string } => ({ ok: false, error: (e as Error).message }));
+    setResult({ ok: r.ok, text: r.ok ? "Todo listo para transcribir" : r.error ?? "Error" });
   }
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <button type="button" className="btn-ghost px-3 py-1 text-xs" onClick={test} disabled={disabled || state.busy}>
-        {state.busy ? "Probando…" : "Probar conexión"}
-      </button>
-      {state.result && <span className={`text-xs break-all ${state.ok ? "text-ok" : "text-danger"}`}>{state.result}</span>}
+      <button type="button" className="btn-ghost px-3 py-1 text-xs" onClick={test}>Comprobar</button>
+      {result && <span className={`text-xs ${result.ok ? "text-ok" : "text-danger"}`}>{result.text}</span>}
     </div>
   );
 }
@@ -45,7 +32,11 @@ function TestButton({ engine, disabled }: { engine: EngineId; disabled?: boolean
 export function SettingsForm() {
   const [data, setData] = useState<Payload | null>(null);
   const [draft, setDraft] = useState<Settings | null>(null);
+  const [newKey, setNewKey] = useState("");
   const [status, setStatus] = useState<string | null>(null);
+  const [models, setModels] = useState<string[]>([]);
+  const [aiResult, setAiResult] = useState<Result>(null);
+  const [busy, setBusy] = useState<"models" | "test" | null>(null);
 
   useEffect(() => {
     api<Payload>("/api/settings").then((d) => { setData(d); setDraft(d.settings); });
@@ -54,83 +45,97 @@ export function SettingsForm() {
   if (!data || !draft) return <p className="text-sm text-muted">Cargando…</p>;
 
   const set = <K extends keyof Settings>(key: K, value: Settings[K]) => setDraft({ ...draft, [key]: value });
+  const provider = draft.organizerProvider === "basic" ? null : PROVIDERS[draft.organizerProvider];
+  const savedKey = provider ? data.apiKeys[provider.id] : null;
 
-  async function save() {
+  async function save(extra: Record<string, unknown> = {}) {
     setStatus("Guardando…");
     try {
-      const d = await api<Payload>("/api/settings", { method: "PUT", body: JSON.stringify(draft) });
+      const body: Record<string, unknown> = { ...draft, ...extra };
+      if (provider && newKey.trim()) body.apiKey = { provider: provider.id, key: newKey.trim() };
+      const d = await api<Payload>("/api/settings", { method: "PUT", body: JSON.stringify(body) });
       setData(d);
       setDraft(d.settings);
+      setNewKey("");
       setStatus("Guardado");
+      return true;
     } catch (e) {
       setStatus((e as Error).message);
+      return false;
     }
+  }
+
+  function chooseProvider(id: Settings["organizerProvider"]) {
+    setModels([]);
+    setAiResult(null);
+    setNewKey("");
+    // A model name only makes sense for its own provider.
+    setDraft((d) => d && { ...d, organizerProvider: id, organizerModel: "" });
+  }
+
+  async function loadModels() {
+    setBusy("models");
+    setAiResult(null);
+    if (await save()) {
+      const r = await api<{ models: string[]; error?: string }>("/api/organizer/models");
+      setModels(r.models);
+      if (r.error) setAiResult({ ok: false, text: r.error });
+      else if (!r.models.length) setAiResult({ ok: false, text: "El proveedor no devolvió modelos." });
+    }
+    setBusy(null);
+  }
+
+  async function testAi() {
+    setBusy("test");
+    setAiResult(null);
+    if (await save()) {
+      const r = await api<{ ok: boolean; error?: string; ms?: number; paragraphs?: number; sections?: string[] }>(
+        "/api/organizer/test",
+        { method: "POST" },
+      );
+      setAiResult(
+        r.ok
+          ? {
+              ok: true,
+              text: `Funciona (${((r.ms ?? 0) / 1000).toFixed(1)} s): ${r.paragraphs} párrafos${
+                r.sections?.length ? `, secciones: ${r.sections.join(" · ")}` : ""
+              }.`,
+            }
+          : { ok: false, text: r.error ?? "Error" },
+      );
+    }
+    setBusy(null);
   }
 
   return (
     <div className="space-y-6">
       <section className="card space-y-4 p-5">
-        <h2 className="font-semibold">Transcripción</h2>
         <div>
-          <label className="label" htmlFor="engine">Motor por defecto</label>
-          <select id="engine" className="input" value={draft.defaultEngine} onChange={(e) => set("defaultEngine", e.target.value as EngineId)}>
-            {(Object.keys(ENGINE_LABEL) as EngineId[]).map((id) => <option key={id} value={id}>{ENGINE_LABEL[id]}</option>)}
-          </select>
-          <p className="mt-1 text-xs text-muted">Se puede cambiar en cada prédica antes de transcribir.</p>
-        </div>
-
-        <div className="rounded-lg border-2 border-accent/30 p-4">
-          <h3 className="mb-1 text-sm font-semibold">En este computador (recomendado, sin costo)</h3>
-          <p className="mb-3 text-xs text-muted">
-            Whisper transcribe con el procesador de este computador. El modelo se descarga una sola vez.
-          </p>
-          <ModelManager onActiveChange={(p) => setDraft((d) => (d ? { ...d, localModelPath: p } : d))} />
-          <details className="mt-3 text-sm">
-            <summary className="cursor-pointer text-xs text-muted">Opciones avanzadas</summary>
-            <div className="mt-2 space-y-3">
-              <div>
-                <label className="label" htmlFor="model">Ruta de un modelo propio (ggml)</label>
-                <input id="model" className="input font-mono text-xs" value={draft.localModelPath} onChange={(e) => set("localModelPath", e.target.value)} />
-              </div>
-              <div>
-                <label className="label" htmlFor="threads">Hilos de CPU</label>
-                <input id="threads" type="number" min={1} max={32} className="input w-28" value={draft.localThreads} onChange={(e) => set("localThreads", +e.target.value)} />
-              </div>
-              <TestButton engine="local" />
-            </div>
-          </details>
-        </div>
-
-        <div className="rounded-lg border border-line p-4">
-          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-            <h3 className="text-sm font-semibold">En la nube (de pago)</h3>
-            <div className="flex gap-2"><Key ok={data.secrets.openai} name="OPENAI_API_KEY" /><Key ok={data.secrets.groq} name="GROQ_API_KEY" /></div>
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div>
-              <label className="label" htmlFor="oai">Modelo OpenAI / compatible</label>
-              <input id="oai" className="input" value={draft.openaiModel} onChange={(e) => set("openaiModel", e.target.value)} />
-              <p className="mt-1 text-xs text-muted">Servidor: <code>{data.secrets.openaiHost ?? "api.openai.com"}</code></p>
-              <div className="mt-2"><TestButton engine="openai" disabled={!data.secrets.openai} /></div>
-            </div>
-            <div>
-              <label className="label" htmlFor="groq">Modelo Groq</label>
-              <input id="groq" className="input" value={draft.groqModel} onChange={(e) => set("groqModel", e.target.value)} />
-              <div className="mt-2 pt-5"><TestButton engine="groq" disabled={!data.secrets.groq} /></div>
-            </div>
-          </div>
-          <p className="mt-2 text-xs text-muted">
-            Las claves se configuran en el archivo <code>.env.local</code> del servidor, nunca desde el navegador. Para un
-            servidor compatible con OpenAI (por ejemplo LiteLLM), añade también <code>OPENAI_BASE_URL</code>. Guarda los
-            ajustes antes de probar un modelo nuevo.
+          <h2 className="font-semibold">Transcripción</h2>
+          <p className="mt-1 text-xs text-muted">
+            Whisper transcribe con este computador, sin internet y sin costo. El modelo se descarga una sola vez.
           </p>
         </div>
-
+        <ModelManager onActiveChange={(p) => setDraft((d) => (d ? { ...d, localModelPath: p } : d))} />
         <div>
           <label className="label" htmlFor="vocab">Vocabulario de ayuda</label>
           <textarea id="vocab" rows={3} className="input" value={draft.vocabularyPrompt} onChange={(e) => set("vocabularyPrompt", e.target.value)} />
           <p className="mt-1 text-xs text-muted">Nombres de pastores, de la iglesia y palabras frecuentes; mejora cómo se escriben.</p>
         </div>
+        <details className="text-sm">
+          <summary className="cursor-pointer text-xs text-muted">Opciones avanzadas</summary>
+          <div className="mt-2 space-y-3">
+            <div>
+              <label className="label" htmlFor="model">Ruta de un modelo propio (ggml)</label>
+              <input id="model" className="input font-mono text-xs" value={draft.localModelPath} onChange={(e) => set("localModelPath", e.target.value)} />
+            </div>
+            <div>
+              <label className="label" htmlFor="threads">Hilos de CPU</label>
+              <input id="threads" type="number" min={1} max={32} className="input w-28" value={draft.localThreads} onChange={(e) => set("localThreads", +e.target.value)} />
+            </div>
+            <LocalTestButton />
+          </div>
+        </details>
       </section>
 
       <section className="card space-y-4 p-5">
@@ -146,30 +151,117 @@ export function SettingsForm() {
       </section>
 
       <section className="card space-y-4 p-5">
-        <div className="flex flex-wrap items-center justify-between gap-2">
+        <div>
           <h2 className="font-semibold">Organización del texto</h2>
-          <Key ok={data.secrets.anthropic} name="ANTHROPIC_API_KEY" />
+          <p className="mt-1 text-xs text-muted">
+            Decide dónde empieza cada párrafo y, con IA, agrega títulos de sección. Nunca cambia lo que dijo el
+            predicador. Con IA se envía el texto transcrito (no el audio) al proveedor elegido.
+          </p>
         </div>
+
         <div>
-          <label className="label" htmlFor="formatter">Organizador</label>
-          <select id="formatter" className="input" value={draft.formatter} onChange={(e) => set("formatter", e.target.value as Settings["formatter"])}>
-            <option value="claude">Claude (IA): párrafos por idea y títulos de sección</option>
-            <option value="heuristic">Básico: párrafos por pausas y longitud (sin IA)</option>
+          <label className="label" htmlFor="provider">Organizador</label>
+          <select
+            id="provider"
+            className="input"
+            value={draft.organizerProvider}
+            onChange={(e) => chooseProvider(e.target.value as Settings["organizerProvider"])}
+          >
+            <option value="basic">Básico, en este computador (sin IA): párrafos por pausas y longitud</option>
+            {Object.values(PROVIDERS).map((p) => (
+              <option key={p.id} value={p.id}>IA: {p.label}</option>
+            ))}
           </select>
-          <p className="mt-1 text-xs text-muted">En ambos casos no se cambia ninguna palabra: solo se decide dónde empiezan los párrafos.</p>
         </div>
-        <div>
-          <label className="label" htmlFor="cmodel">Modelo de Claude</label>
-          <input id="cmodel" className="input" value={draft.claudeModel} onChange={(e) => set("claudeModel", e.target.value)} />
-        </div>
-        <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" checked={draft.addHeadings} onChange={(e) => set("addHeadings", e.target.checked)} />
-          Añadir títulos de sección
-        </label>
+
+        {provider && (
+          <div className="space-y-4 rounded-lg border border-line p-4">
+            {provider.id === "custom" && (
+              <div>
+                <label className="label" htmlFor="baseurl">Dirección del servidor</label>
+                <input
+                  id="baseurl"
+                  className="input font-mono text-xs"
+                  placeholder="http://localhost:11434/v1"
+                  value={draft.organizerBaseUrl}
+                  onChange={(e) => set("organizerBaseUrl", e.target.value)}
+                />
+                <p className="mt-1 text-xs text-muted">Ollama usa <code>http://localhost:11434/v1</code>.</p>
+              </div>
+            )}
+
+            <div>
+              <label className="label" htmlFor="apikey">Clave de API{provider.keyRequired ? "" : " (opcional)"}</label>
+              {savedKey && !newKey ? (
+                <div className="flex flex-wrap items-center gap-2 text-sm">
+                  <span className="rounded bg-ok/10 px-1.5 py-0.5 text-xs font-medium text-ok">Clave guardada {savedKey}</span>
+                  <button type="button" className="btn-ghost px-3 py-1 text-xs" onClick={() => setNewKey(" ")}>Cambiar</button>
+                  <button
+                    type="button"
+                    className="btn-ghost px-3 py-1 text-xs text-danger"
+                    onClick={() => confirm("¿Borrar la clave guardada?") && save({ apiKey: { provider: provider.id, key: null } })}
+                  >
+                    Borrar
+                  </button>
+                </div>
+              ) : (
+                <input
+                  id="apikey"
+                  type="password"
+                  autoComplete="off"
+                  className="input font-mono text-xs"
+                  placeholder="Pega aquí la clave"
+                  value={newKey.trim() ? newKey : ""}
+                  onChange={(e) => setNewKey(e.target.value)}
+                />
+              )}
+              <p className="mt-1 text-xs text-muted">
+                Se guarda solo en este computador.
+                {provider.keyUrl && (
+                  <> Consíguela en <a className="underline" href={provider.keyUrl} target="_blank" rel="noreferrer">{new URL(provider.keyUrl).host}</a>.</>
+                )}
+              </p>
+            </div>
+
+            <div>
+              <label className="label" htmlFor="aimodel">Modelo</label>
+              <div className="flex flex-wrap gap-2">
+                <input
+                  id="aimodel"
+                  className="input min-w-48 flex-1"
+                  list="ai-models"
+                  placeholder={provider.defaultModel || "nombre del modelo"}
+                  value={draft.organizerModel}
+                  onChange={(e) => set("organizerModel", e.target.value)}
+                />
+                <datalist id="ai-models">{models.map((m) => <option key={m} value={m} />)}</datalist>
+                <button type="button" className="btn-ghost px-3 py-1 text-xs" onClick={loadModels} disabled={busy !== null}>
+                  {busy === "models" ? "Consultando…" : "Ver modelos disponibles"}
+                </button>
+              </div>
+              <p className="mt-1 text-xs text-muted">
+                {provider.defaultModel ? <>Si lo dejas vacío se usa <code>{provider.defaultModel}</code>. </> : null}
+                {models.length > 0 && `${models.length} modelos disponibles: escribe para filtrar.`}
+              </p>
+            </div>
+
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" checked={draft.addHeadings} onChange={(e) => set("addHeadings", e.target.checked)} />
+              Añadir títulos de sección
+            </label>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <button type="button" className="btn-ghost px-3 py-1 text-xs" onClick={testAi} disabled={busy !== null}>
+                {busy === "test" ? "Probando…" : "Probar con un texto de ejemplo"}
+              </button>
+              {aiResult && <span className={`text-xs break-all ${aiResult.ok ? "text-ok" : "text-danger"}`}>{aiResult.text}</span>}
+            </div>
+          </div>
+        )}
       </section>
 
       <div className="flex items-center gap-3">
-        <button className="btn-primary" onClick={save}>Guardar ajustes</button>
+        <button className="btn-primary" onClick={() => save()}>Guardar ajustes</button>
         {status && <span className="text-sm text-muted">{status}</span>}
       </div>
     </div>

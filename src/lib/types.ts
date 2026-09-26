@@ -8,7 +8,8 @@ export type SermonStatus =
   | "ready"
   | "failed";
 
-export type EngineId = "local" | "openai" | "groq";
+/** Transcription always runs with whisper.cpp on this computer. */
+export type EngineId = "local";
 
 export interface Sermon {
   id: string;

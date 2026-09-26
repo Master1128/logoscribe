@@ -39,7 +39,7 @@ Cierra Logoscribe y ejecuta `actualizar-mac.command` o `actualizar-windows.bat`.
 2. La app separa voz de música y **propone dónde empieza y termina la prédica**.
 3. **Revisar el recorte** sobre la forma de onda: escuchar el inicio y el final, ajustar si hace falta.
 4. **Transcribir** ese tramo con Whisper en tu computador.
-5. Se organiza en **párrafos sin cambiar ninguna palabra**.
+5. Se organiza en **párrafos sin cambiar ninguna palabra** (ver abajo).
 6. **Revisar y editar** con el audio sincronizado: clic en un párrafo para editarlo, Enter divide, Retroceso al inicio une, ▶ escucha desde ahí.
 7. **Exportar** a Word o PDF con portada, números de página, citas bíblicas en negrita e índice de citas.
 
@@ -52,9 +52,14 @@ La biblioteca busca cualquier palabra dicha en tus prédicas, sin importar las t
 | Mac con chip M4 (16 GB), Large v3 Turbo | ≈ 4 minutos (medido) |
 | Windows con procesador, sin tarjeta gráfica | Bastante más lento (sin medir aún); el modelo comprimido ayuda |
 
-## Opcional: motores en la nube
+## Organización del texto
 
-En `.env.local` (ver `.env.example`) se pueden configurar OpenAI (o un servidor compatible), Groq y Claude (para títulos de sección). No son necesarios.
+Después de transcribir, el texto se divide en párrafos. Hay dos opciones en **Ajustes → Organización del texto**:
+
+- **Básico** (por defecto, sin internet): párrafos por pausas y longitud.
+- **Con IA**: agrupa por ideas y agrega títulos de sección. Elige el proveedor — Claude, OpenAI, DeepSeek, Gemini, GLM u otro compatible con OpenAI (por ejemplo Ollama en el mismo computador) —, pega la clave y pulsa «Probar con un texto de ejemplo». La clave se guarda solo en ese computador. Se envía el texto transcrito, nunca el audio.
+
+En ambos casos la IA solo decide dónde empieza cada párrafo: **nunca cambia lo que dijo el predicador**. Si el proveedor falla, se usa el organizador básico y la prédica queda igual de lista.
 
 ## Para desarrolladores
 
