@@ -2,6 +2,12 @@
  * Background worker: imports, analyzes, transcribes and formats sermons from
  * the jobs table. Start with `pnpm worker` (or `pnpm dev` alongside the web).
  */
+import fs from "node:fs";
+import path from "node:path";
+import { spawnSync } from "node:child_process";
+import { whisperCliAvailable } from "@/lib/models";
+import { getSettings } from "@/lib/settings";
+import { tool } from "@/lib/tools";
 import { claimJob, getSermon, jobStatus, requeueStale, setStatus, updateJob } from "@/lib/repo";
 import { downloadLane } from "./downloads";
 import { HANDLERS } from "./jobs";
@@ -46,6 +52,22 @@ async function lane(types: Job["type"][]) {
   }
 }
 
+/** One-glance status in the Logoscribe window: what's installed and what's missing. */
+function reportSetup() {
+  const settings = getSettings();
+  const ffmpegOk = !spawnSync(tool("ffmpeg"), ["-version"], { stdio: "ignore" }).error;
+  const lines = [
+    ffmpegOk ? "✓ ffmpeg" : "✗ Falta ffmpeg: vuelve a ejecutar el instalador",
+    whisperCliAvailable() ? "✓ whisper.cpp" : "✗ Falta whisper.cpp: vuelve a ejecutar el instalador",
+    fs.existsSync(settings.localModelPath)
+      ? `✓ Modelo de transcripción: ${path.basename(settings.localModelPath)}`
+      : "✗ Falta el modelo de transcripción: descárgalo en Ajustes",
+    fs.existsSync(settings.localVadModelPath) ? "✓ Detector de voz" : "· Detector de voz: se descarga junto con el modelo",
+  ];
+  console.log(["", "Logoscribe — estado de la instalación", ...lines.map((l) => `  ${l}`), ""].join("\n"));
+}
+
+reportSetup();
 requeueStale();
 console.log(`[worker] esperando trabajos (carriles: ${LANES.map((l) => l.name).join(", ")}, descargas)…`);
 for (const l of LANES) lane(l.types);
