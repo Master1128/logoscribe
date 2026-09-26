@@ -6,24 +6,40 @@ Convierte la grabación completa de un culto (alabanza + prédica) en una prédi
 
 Necesitas unos 3 GB libres y conexión a internet durante la instalación. No hace falta cuenta de GitHub.
 
-**[⬇ Descargar Logoscribe (ZIP)](https://github.com/Master1128/logoscribe/archive/refs/heads/main.zip)**
-
 ### Mac
 
-1. Descarga el ZIP con el enlace de arriba. Safari lo descomprime solo y deja la carpeta `logoscribe-main` en *Descargas*.
-2. Mueve la carpeta `logoscribe-main` a tu carpeta personal (la de la casita, junto a *Descargas* y *Documentos*).
-3. Ábrela y haz **clic derecho → Abrir** sobre `instalar-mac.command` (la primera vez macOS pide confirmar).
-4. Espera a que termine (10–20 minutos la primera vez). Puede pedirte la contraseña del Mac.
+1. Abre la app **Terminal** (búscala con ⌘ + espacio escribiendo «Terminal»).
+2. Copia esta línea, pégala en la Terminal y pulsa Enter:
+
+   ```bash
+   curl -fsSL https://raw.githubusercontent.com/Master1128/logoscribe/main/scripts/instalar-mac.sh | bash
+   ```
+
+3. Espera a que termine (10–20 minutos la primera vez). Puede pedirte la contraseña del Mac (al escribirla no se ven los caracteres; es normal).
+
+Se instala en la carpeta `Logoscribe` de tu carpeta personal y deja un acceso directo **Logoscribe** en el Escritorio.
 
 ### Windows 10/11
 
-1. Descarga el ZIP con el enlace de arriba, haz clic derecho sobre él → **Extraer todo…** y extráelo en `C:\Logoscribe` (o en tu carpeta de usuario).
-2. Abre la carpeta `logoscribe-main` y haz doble clic en `instalar-windows.bat`. Si Windows muestra «Windows protegió tu PC», elige **Más información → Ejecutar de todas formas**.
+1. Abre **PowerShell** (menú Inicio → escribe «PowerShell»).
+2. Copia esta línea, pégala y pulsa Enter:
+
+   ```powershell
+   irm https://raw.githubusercontent.com/Master1128/logoscribe/main/scripts/windows/instalar-web.ps1 | iex
+   ```
+
 3. Espera a que termine (10–20 minutos la primera vez).
 
-El instalador deja un acceso directo **Logoscribe** en el Escritorio.
+Se instala en `C:\Users\<tu usuario>\Logoscribe` y deja un acceso directo **Logoscribe** en el Escritorio.
 
-> Consejo: evita instalar el programa dentro de una carpeta sincronizada con iCloud u OneDrive (a veces *Documentos* y *Escritorio* lo están); la instalación se vuelve lenta. Tus prédicas siempre se guardan aparte, en una carpeta que no se sincroniza.
+### Alternativa: descargar el ZIP
+
+**[⬇ Descargar Logoscribe (ZIP)](https://github.com/Master1128/logoscribe/archive/refs/heads/main.zip)**, descomprímelo y abre `instalar-mac.command` (Mac) o `instalar-windows.bat` (Windows).
+
+Como el programa no está firmado por un desarrollador de pago, el sistema avisa la primera vez:
+
+- **Mac:** si dice «Apple no pudo verificar…», pulsa **Listo**, ve a **Configuración del Sistema → Privacidad y seguridad**, baja hasta el final y pulsa **Abrir de todas formas**. Luego vuelve a abrir el instalador.
+- **Windows:** si dice «Windows protegió tu PC», elige **Más información → Ejecutar de todas formas**.
 
 ### Primer uso
 
