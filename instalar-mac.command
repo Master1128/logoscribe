@@ -3,6 +3,9 @@
 set -e
 cd "$(dirname "$0")"
 echo "=== Instalando Logoscribe ==="
+# Descargado como ZIP, macOS marca cada archivo "de internet" y pediría confirmar
+# el lanzador y el actualizador; ya se confirmó al abrir este instalador.
+xattr -dr com.apple.quarantine . 2>/dev/null || true
 
 load_brew() { for b in /opt/homebrew/bin/brew /usr/local/bin/brew; do [ -x "$b" ] && eval "$("$b" shellenv)" && return 0; done; return 1; }
 load_brew || true

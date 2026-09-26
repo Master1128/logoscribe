@@ -4,22 +4,26 @@ Convierte la grabación completa de un culto (alabanza + prédica) en una prédi
 
 ## Instalación
 
-Necesitas acceso a este repositorio en GitHub (pídeselo al administrador) y unos 3 GB libres.
+Necesitas unos 3 GB libres y conexión a internet durante la instalación. No hace falta cuenta de GitHub.
+
+**[⬇ Descargar Logoscribe (ZIP)](https://github.com/Master1128/logoscribe/archive/refs/heads/main.zip)**
 
 ### Mac
 
-1. Descarga el proyecto: botón verde **Code → Download ZIP** en GitHub, y descomprímelo en *Documentos*.
-   (Si usas git: `git clone` en la carpeta que prefieras).
-2. Abre la carpeta y haz **clic derecho → Abrir** sobre `instalar-mac.command` (la primera vez macOS pide confirmar).
-3. Espera a que termine (10–20 minutos la primera vez). Puede pedirte la contraseña del Mac.
+1. Descarga el ZIP con el enlace de arriba. Safari lo descomprime solo y deja la carpeta `logoscribe-main` en *Descargas*.
+2. Mueve la carpeta `logoscribe-main` a tu carpeta personal (la de la casita, junto a *Descargas* y *Documentos*).
+3. Ábrela y haz **clic derecho → Abrir** sobre `instalar-mac.command` (la primera vez macOS pide confirmar).
+4. Espera a que termine (10–20 minutos la primera vez). Puede pedirte la contraseña del Mac.
 
 ### Windows 10/11
 
-1. Descarga el proyecto (**Code → Download ZIP**) y descomprímelo en *Documentos*.
-2. Doble clic en `instalar-windows.bat`. Si Windows muestra «Windows protegió tu PC», elige **Más información → Ejecutar de todas formas**.
+1. Descarga el ZIP con el enlace de arriba, haz clic derecho sobre él → **Extraer todo…** y extráelo en `C:\Logoscribe` (o en tu carpeta de usuario).
+2. Abre la carpeta `logoscribe-main` y haz doble clic en `instalar-windows.bat`. Si Windows muestra «Windows protegió tu PC», elige **Más información → Ejecutar de todas formas**.
 3. Espera a que termine (10–20 minutos la primera vez).
 
 El instalador deja un acceso directo **Logoscribe** en el Escritorio.
+
+> Consejo: evita instalar el programa dentro de una carpeta sincronizada con iCloud u OneDrive (a veces *Documentos* y *Escritorio* lo están); la instalación se vuelve lenta. Tus prédicas siempre se guardan aparte, en una carpeta que no se sincroniza.
 
 ### Primer uso
 
@@ -31,7 +35,7 @@ Para apagar Logoscribe, cierra la ventana negra.
 
 ### Actualizar
 
-Cierra Logoscribe y ejecuta `actualizar-mac.command` o `actualizar-windows.bat`. (Requiere haber descargado el proyecto con git; si lo descargaste como ZIP, descarga el ZIP nuevo, descomprímelo encima y vuelve a ejecutar el instalador. Tus prédicas no se pierden: están guardadas aparte, ver «Dónde se guardan las prédicas».)
+Cierra Logoscribe y ejecuta `actualizar-mac.command` o `actualizar-windows.bat`: descargan la última versión y la instalan. Tus prédicas no se tocan (ver «Dónde se guardan las prédicas»).
 
 ### Dónde se guardan las prédicas
 
@@ -91,3 +95,7 @@ src/
   lib/          detect, transcribe, format, bible, export/, models, repo/db
   worker/       cola de trabajos y descargas de modelos
 ```
+
+## Licencia
+
+[MIT](LICENSE): puedes usarlo, modificarlo y compartirlo libremente.

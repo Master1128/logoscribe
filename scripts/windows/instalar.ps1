@@ -19,7 +19,6 @@ Write-Host "=== Instalando Logoscribe ===" -ForegroundColor Cyan
 $nodeOk = $false
 if (Has node) { $nodeOk = [int]((node -v).TrimStart("v").Split(".")[0]) -ge 24 }
 if (-not $nodeOk) { Write-Host "Instalando Node.js..."; Winget "OpenJS.NodeJS.LTS" }
-if (-not (Has git)) { Write-Host "Instalando Git..."; Winget "Git.Git" }
 if (-not (Has pnpm)) { Write-Host "Instalando pnpm..."; npm install -g pnpm; Refresh-Path }
 
 $bin = Join-Path $root "tools\bin"
