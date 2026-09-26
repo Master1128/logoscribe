@@ -14,13 +14,20 @@ export function getSermon(id: string): Sermon | null {
   return (db().prepare("SELECT * FROM sermons WHERE id = ?").get(id) as unknown as Sermon) ?? null;
 }
 
+/**
+ * Text pasted from macOS file names comes decomposed ("i" + combining accent).
+ * Store the composed form so search, exports and PDF fonts all see "í".
+ */
+const nfc = <T,>(v: T): T => (typeof v === "string" ? (v.normalize("NFC") as T) : v);
+
 export function createSermon(
   data: Pick<Sermon, "title" | "preacher" | "series" | "service_date" | "source_name"> & { source_url?: string | null },
 ): Sermon {
   const id = nanoid(10);
   db().prepare(
     `INSERT INTO sermons (id, title, preacher, series, service_date, source_name, source_url) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-  ).run(id, data.title, data.preacher, data.series, data.service_date, data.source_name, data.source_url ?? null);
+  ).run(id, nfc(data.title), nfc(data.preacher), nfc(data.series), data.service_date, nfc(data.source_name), data.source_url ?? null);
+  reindex(id); // findable by title and preacher before it's transcribed
   return getSermon(id)!;
 }
 
@@ -33,7 +40,7 @@ export function updateSermon(id: string, patch: Partial<Pick<Sermon, Editable>>)
   if (!entries.length) return;
   const sets = entries.map(([k]) => `${k} = ?`).join(", ");
   db().prepare(`UPDATE sermons SET ${sets}, updated_at = datetime('now') WHERE id = ?`)
-    .run(...(entries.map(([, v]) => v) as (string | number | null)[]), id);
+    .run(...(entries.map(([k, v]) => (k === "source_path" ? v : nfc(v))) as (string | number | null)[]), id);
   if (entries.some(([k]) => ["title", "preacher", "series"].includes(k))) reindex(id);
 }
 
@@ -115,7 +122,7 @@ export function saveBlocks(sermonId: string, blocks: Block[]) {
   tx(() => {
     db().prepare("DELETE FROM blocks WHERE sermon_id = ?").run(sermonId);
     const stmt = db().prepare("INSERT INTO blocks (sermon_id, idx, kind, text, start, end) VALUES (?, ?, ?, ?, ?, ?)");
-    blocks.forEach((b, i) => stmt.run(sermonId, i, b.kind, b.text, b.start, b.end));
+    blocks.forEach((b, i) => stmt.run(sermonId, i, b.kind, nfc(b.text), b.start, b.end));
   });
   reindex(sermonId);
 }

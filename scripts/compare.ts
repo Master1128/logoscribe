@@ -1,7 +1,9 @@
 // Compares a sermon's current transcription with a saved reference.
-//   pnpm tsx scripts/compare.ts <sermonId> data/benchmarks/<reference>.json
+//   pnpm tsx scripts/compare.ts <sermonId> <referencia.json>  (las referencias están en la carpeta de datos, benchmarks/)
 import fs from "node:fs";
+import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
+import { DATA_DIR } from "@/lib/paths";
 
 const norm = (t: string) =>
   t.toLowerCase().normalize("NFC").replace(/[¿¡.,;:!?"«»“”()…-]/g, " ").split(/\s+/).filter(Boolean);
@@ -21,7 +23,7 @@ function wordErrors(ref: string[], hyp: string[]) {
 }
 
 const [id, refFile] = process.argv.slice(2);
-const db = new DatabaseSync("data/logoscribe.db");
+const db = new DatabaseSync(path.join(DATA_DIR, "logoscribe.db"));
 const hyp = (db.prepare("SELECT text FROM segments WHERE sermon_id = ? ORDER BY idx").all(id) as { text: string }[]).map((r) => r.text).join(" ");
 const ref = (JSON.parse(fs.readFileSync(refFile, "utf8")) as { text: string }[]).map((r) => r.text).join(" ");
 const r = norm(ref), h = norm(hyp);

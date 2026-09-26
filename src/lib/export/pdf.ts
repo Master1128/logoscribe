@@ -7,7 +7,15 @@ const INK = "#1f2430";
 const HEADING = "#2b3a55";
 const MUTED = "#888888";
 
-export function buildPdf(sermon: Sermon, blocks: Block[], opts: ExportOptions): Promise<Buffer> {
+/**
+ * The built-in PDF fonts only know precomposed letters: normalize, and drop any
+ * combining mark left over rather than printing a wrong glyph.
+ */
+const clean = (s: string) => s.normalize("NFC").replace(/[\u0300-\u036f]/g, "");
+
+export function buildPdf(sermonIn: Sermon, blocksIn: Block[], opts: ExportOptions): Promise<Buffer> {
+  const sermon = { ...sermonIn, title: clean(sermonIn.title), preacher: sermonIn.preacher && clean(sermonIn.preacher), series: sermonIn.series && clean(sermonIn.series) };
+  const blocks = blocksIn.map((b) => ({ ...b, text: clean(b.text) }));
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({
       size: "LETTER",

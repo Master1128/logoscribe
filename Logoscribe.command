@@ -5,7 +5,7 @@ for b in /opt/homebrew/bin/brew /usr/local/bin/brew; do [ -x "$b" ] && eval "$("
 URL="http://localhost:3131"
 
 if curl -s -o /dev/null "$URL"; then open "$URL"; exit 0; fi
-[ -f .next/BUILD_ID ] || pnpm build
+[ -f .next.nosync/BUILD_ID ] || pnpm build
 ( until curl -s -o /dev/null "$URL"; do sleep 1; done; open "$URL" ) &
 echo "Logoscribe está funcionando en $URL"
 echo "Deja esta ventana abierta mientras lo usas; ciérrala para apagarlo."
