@@ -16,4 +16,10 @@ rsync -a "$TMP/nuevo/logoscribe-main/" "$DEST/"
 rm -rf "$TMP"
 
 chmod +x "$DEST"/*.command
-bash "$DEST/instalar-mac.command"
+# With `curl … | bash` stdin is the download, not the keyboard. Homebrew's
+# installer needs the keyboard (ENTER, sudo password), so give it the terminal.
+if [ -r /dev/tty ]; then
+  bash "$DEST/instalar-mac.command" < /dev/tty
+else
+  bash "$DEST/instalar-mac.command"
+fi
