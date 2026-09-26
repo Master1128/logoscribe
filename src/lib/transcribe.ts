@@ -4,6 +4,7 @@ import OpenAI, { toFile } from "openai";
 import { extractClip, run } from "./audio";
 import { quietPoint } from "./detect";
 import { whisperCliAvailable } from "./models";
+import { tool } from "./tools";
 import { secrets, type Settings } from "./settings";
 import type { EngineId, Region, Segment } from "./types";
 
@@ -24,7 +25,6 @@ export interface TranscribeInput {
 }
 
 export async function transcribe(input: TranscribeInput): Promise<Segment[]> {
-  if (input.engine === "browser") throw new Error("La transcripción en el navegador la hace la página de la prédica");
   fs.mkdirSync(input.workDir, { recursive: true });
   const raw = input.engine === "local" ? await transcribeLocal(input) : await transcribeCloud(input);
   return cleanSegments(raw);
@@ -48,7 +48,7 @@ async function transcribeLocal({ source, start, end, settings, workDir, onProgre
   // invents text or gets stuck repeating a line.
   const vad = fs.existsSync(settings.localVadModelPath) ? ["--vad", "-vm", settings.localVadModelPath] : [];
   await run(
-    process.env.WHISPER_CLI_PATH ?? "whisper-cli",
+    tool("whisper-cli"),
     [
       "-m", settings.localModelPath,
       "-f", wav,
@@ -103,7 +103,7 @@ export async function testEngine(engine: EngineId, settings: Settings, workDir: 
   }
   fs.mkdirSync(workDir, { recursive: true });
   const file = path.join(workDir, `test-${Date.now()}.mp3`);
-  await run(process.env.FFMPEG_PATH ?? "ffmpeg", ["-y", "-f", "lavfi", "-i", "sine=frequency=440:duration=3", "-ac", "1", "-ar", "16000", "-b:a", "32k", file]);
+  await run(tool("ffmpeg"), ["-y", "-f", "lavfi", "-i", "sine=frequency=440:duration=3", "-ac", "1", "-ar", "16000", "-b:a", "32k", file]);
   const t0 = Date.now();
   try {
     await cloudRequest(cloudClient(engine), engine === "groq" ? settings.groqModel : settings.openaiModel, file, 0);

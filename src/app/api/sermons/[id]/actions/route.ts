@@ -1,4 +1,3 @@
-import { releaseLock } from "@/lib/browser-jobs";
 import { activeJob, cancelJob, enqueue, getBlocks, getSegments, getSermon, lastJob, setStatus, updateSermon } from "@/lib/repo";
 import { getSettings } from "@/lib/settings";
 
@@ -10,12 +9,6 @@ export async function POST(request: Request, ctx: RouteContext<"/api/sermons/[id
   const { action } = await request.json();
   const running = activeJob(id);
 
-  if (action === "cancel" && !running && sermon.status === "transcribing" && sermon.engine === "browser") {
-    // In-browser transcription has no server job; finished parts are kept for later.
-    releaseLock(sermon);
-    setStatus(id, "review");
-    return Response.json({ sermon: getSermon(id) });
-  }
   if (action === "cancel") {
     if (!running) return Response.json({ error: "No hay ningún proceso en curso" }, { status: 400 });
     cancelJob(running.id);
@@ -34,8 +27,7 @@ export async function POST(request: Request, ctx: RouteContext<"/api/sermons/[id
       }
       if (!sermon.engine) updateSermon(id, { engine: getSettings().defaultEngine });
       setStatus(id, "transcribing");
-      // The browser engine is driven by the user's page, not the worker.
-      if ((getSermon(id)!.engine ?? "browser") !== "browser") enqueue(id, "transcribe");
+      enqueue(id, "transcribe");
       break;
     case "reformat":
       if (!getSegments(id).length) return Response.json({ error: "Aún no hay transcripción" }, { status: 400 });

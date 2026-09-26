@@ -7,6 +7,7 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { db } from "./db";
 import { DATA_DIR } from "./paths";
+import { tool } from "./tools";
 
 export interface ModelDef {
   id: string;
@@ -26,7 +27,7 @@ export const MODELS: ModelDef[] = [
     id: "large-v3-turbo",
     file: "ggml-large-v3-turbo.bin",
     label: "Large v3 Turbo",
-    description: "La mejor opción para prédicas en español: muy buena calidad y rápido en equipos modernos.",
+    description: "La mejor opción para prédicas en español. Muy rápido en Mac con chip M; en Windows funciona con el procesador (más lento).",
     bytes: 1_624_555_275,
     url: `${HF}/ggml-large-v3-turbo.bin`,
     recommended: true,
@@ -35,7 +36,7 @@ export const MODELS: ModelDef[] = [
     id: "large-v3-turbo-q5_0",
     file: "ggml-large-v3-turbo-q5_0.bin",
     label: "Large v3 Turbo (comprimido)",
-    description: "Casi la misma calidad ocupando un tercio. Buena opción para equipos con poca memoria.",
+    description: "Casi la misma calidad ocupando un tercio y algo más rápido. Recomendado para computadores con 8 GB de memoria o menos.",
     bytes: 574_041_195,
     url: `${HF}/ggml-large-v3-turbo-q5_0.bin`,
   },
@@ -142,7 +143,7 @@ let whisperCache: { ok: boolean; at: number } | null = null;
 /** Whether the whisper.cpp command line tool is installed on the server. */
 export function whisperCliAvailable(): boolean {
   if (whisperCache && Date.now() - whisperCache.at < 60_000) return whisperCache.ok;
-  const res = spawnSync(process.env.WHISPER_CLI_PATH ?? "whisper-cli", ["--help"], { stdio: "ignore", timeout: 10_000 });
+  const res = spawnSync(tool("whisper-cli"), ["--help"], { stdio: "ignore", timeout: 10_000 });
   whisperCache = { ok: !res.error, at: Date.now() };
   return whisperCache.ok;
 }

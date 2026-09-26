@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { SetupNotice } from "./SetupNotice";
 import { StatusBadge } from "./StatusBadge";
 import { api, formatDate, formatTime } from "@/lib/ui";
 import type { Sermon } from "@/lib/types";
@@ -51,6 +52,8 @@ export function Library() {
           <p className="mt-1 text-sm text-muted">Busca por cualquier palabra dicha en la prédica, el título o el predicador.</p>
         </div>
       </div>
+
+      <SetupNotice />
 
       <div className="card mb-6 flex flex-wrap gap-3 p-3">
         <div className="relative min-w-56 flex-1">

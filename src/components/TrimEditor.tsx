@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import type WaveSurfer from "wavesurfer.js";
 import type { Region as WsRegion } from "wavesurfer.js/dist/plugins/regions.esm.js";
-import { activeBrowserModel } from "@/lib/browser/asr";
 import { api, ENGINE_LABEL, formatTime } from "@/lib/ui";
 import type { EngineId, Region, Sermon } from "@/lib/types";
 
@@ -55,13 +54,11 @@ export function TrimEditor({ sermon, onChange }: { sermon: Sermon; onChange: () 
   const [zoom, setZoom] = useState(0);
   const [engines, setEngines] = useState<SettingsPayload | null>(null);
   const [engine, setEngine] = useState<EngineId | null>(sermon.engine);
-  const [browserModel, setBrowserModel] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     api<SettingsPayload>("/api/settings").then((s) => {
-      setBrowserModel(activeBrowserModel()?.label ?? null);
       setEngines(s);
       setEngine((e) => e ?? s.settings.defaultEngine);
     });
@@ -191,9 +188,8 @@ export function TrimEditor({ sermon, onChange }: { sermon: Sermon; onChange: () 
   }
 
   const available = (id: EngineId) =>
-    id === "browser" ? Boolean(browserModel) : !engines ? true : id === "local" ? engines.localModelFound : engines.secrets[id];
-  const missing = (id: EngineId) =>
-    id === "browser" ? " — descarga un modelo en Ajustes" : id === "local" ? " — falta el modelo" : " — falta la clave";
+    !engines ? true : id === "local" ? engines.localModelFound : engines.secrets[id];
+  const missing = (id: EngineId) => (id === "local" ? " — descarga un modelo en Ajustes" : " — falta la clave");
 
   return (
     <div className="space-y-4">
@@ -259,7 +255,7 @@ export function TrimEditor({ sermon, onChange }: { sermon: Sermon; onChange: () 
           <select id="engine" className="input" value={engine ?? ""} onChange={(e) => setEngine(e.target.value as EngineId)}>
             {(Object.keys(ENGINE_LABEL) as EngineId[]).map((id) => (
               <option key={id} value={id} disabled={!available(id)}>
-                {ENGINE_LABEL[id]}{available(id) ? (id === "browser" ? ` — ${browserModel}` : "") : missing(id)}
+                {ENGINE_LABEL[id]}{available(id) ? "" : missing(id)}
               </option>
             ))}
           </select>

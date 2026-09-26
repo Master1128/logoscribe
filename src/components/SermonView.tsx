@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { StatusBadge } from "./StatusBadge";
 import { TrimEditor } from "./TrimEditor";
-import { BrowserTranscriber } from "./BrowserTranscriber";
 import { TranscriptEditor } from "./TranscriptEditor";
 import { api, formatDate, PROCESSING, type SermonPayload } from "@/lib/ui";
 
@@ -19,14 +18,12 @@ export function SermonView({ id }: { id: string }) {
 
   useEffect(() => { load(); }, [load]);
 
-  const inBrowser = data?.sermon.status === "transcribing" && data.sermon.engine === "browser" && !data.job;
   const busy = data ? PROCESSING.includes(data.sermon.status) || Boolean(data.job) : false;
   useEffect(() => {
-    // The browser transcriber reports its own progress; poll only for server work.
-    if (!busy || inBrowser) return;
+    if (!busy) return;
     const t = setInterval(load, 1500);
     return () => clearInterval(t);
-  }, [busy, inBrowser, load]);
+  }, [busy, load]);
 
   if (error && !data) return <p className="mx-auto max-w-6xl px-4 py-8 text-danger">{error}</p>;
   if (!data) return <p className="mx-auto max-w-6xl px-4 py-8 text-sm text-muted">Cargando…</p>;
@@ -54,9 +51,7 @@ export function SermonView({ id }: { id: string }) {
 
       {error && <p className="mb-4 rounded-lg bg-danger/10 px-4 py-2 text-sm text-danger">{error}</p>}
 
-      {inBrowser ? (
-        <BrowserTranscriber sermon={sermon} onFinished={load} onCancel={() => action("cancel")} />
-      ) : busy ? (
+      {busy ? (
         <Processing
           data={data}
           onCancel={() => confirm("¿Cancelar el proceso en curso?") && action("cancel")}

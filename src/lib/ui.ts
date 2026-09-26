@@ -15,8 +15,7 @@ export const STATUS_LABEL: Record<SermonStatus, string> = {
 };
 
 export const ENGINE_LABEL: Record<EngineId, string> = {
-  browser: "En este navegador (gratis, usa tu computador)",
-  local: "En el servidor (whisper.cpp)",
+  local: "En este computador (gratis)",
   openai: "Whisper en la nube (OpenAI o compatible)",
   groq: "Groq Whisper (nube, muy rápido)",
 };

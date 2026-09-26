@@ -23,7 +23,7 @@ export interface Settings {
 }
 
 export const DEFAULT_SETTINGS: Settings = {
-  defaultEngine: "browser",
+  defaultEngine: "local",
   openaiModel: "whisper-1",
   groqModel: "whisper-large-v3",
   localModelPath: path.join(DATA_DIR, "models", "ggml-large-v3-turbo.bin"),

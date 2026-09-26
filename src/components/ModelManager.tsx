@@ -61,13 +61,14 @@ export function ModelManager({ onActiveChange }: { onActiveChange: (path: string
     <div className="space-y-3">
       {!data.whisperCli && (
         <p className="rounded-lg bg-danger/10 px-3 py-2 text-sm text-danger">
-          Falta instalar whisper.cpp en el servidor (en Mac: <code>brew install whisper-cpp</code>). Sin él no se puede
-          transcribir localmente.
+          No se encontró whisper.cpp en este computador. Vuelve a ejecutar el instalador de Logoscribe
+          (<code>instalar-mac.command</code> o <code>instalar-windows.bat</code>).
         </p>
       )}
       {!hasActive && (
         <p className="rounded-lg bg-gold-soft px-3 py-2 text-sm text-gold">
-          No hay ningún modelo activo. Descarga uno (recomendado: Large v3 Turbo); se activa solo al terminar.
+          No hay ningún modelo activo. Descarga uno (recomendado: Large v3 Turbo; en computadores con poca memoria, el
+          comprimido). Se activa solo al terminar.
         </p>
       )}
 

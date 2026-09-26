@@ -8,7 +8,7 @@ export type SermonStatus =
   | "ready"
   | "failed";
 
-export type EngineId = "browser" | "local" | "openai" | "groq";
+export type EngineId = "local" | "openai" | "groq";
 
 export interface Sermon {
   id: string;

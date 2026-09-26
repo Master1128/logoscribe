@@ -87,6 +87,9 @@ export function db(): DatabaseSync {
 function migrate(conn: DatabaseSync) {
   const columns = new Set((conn.prepare("PRAGMA table_info(sermons)").all() as { name: string }[]).map((c) => c.name));
   if (!columns.has("source_url")) conn.exec("ALTER TABLE sermons ADD COLUMN source_url TEXT");
+  // The in-browser engine was removed: send its sermons back to review.
+  conn.exec(`UPDATE sermons SET status = CASE WHEN status = 'transcribing' THEN 'review' ELSE status END, engine = NULL
+             WHERE engine = 'browser'`);
 }
 
 export function tx<T>(fn: () => T): T {

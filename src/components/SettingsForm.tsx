@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { BrowserModelManager } from "./BrowserModelManager";
 import { ModelManager } from "./ModelManager";
 import { api, ENGINE_LABEL } from "@/lib/ui";
 import type { Settings } from "@/lib/settings";
@@ -81,19 +80,9 @@ export function SettingsForm() {
         </div>
 
         <div className="rounded-lg border-2 border-accent/30 p-4">
-          <h3 className="mb-1 text-sm font-semibold">En tu navegador (recomendado, sin costo)</h3>
+          <h3 className="mb-1 text-sm font-semibold">En este computador (recomendado, sin costo)</h3>
           <p className="mb-3 text-xs text-muted">
-            Tu propio computador transcribe usando su tarjeta gráfica. Cada persona descarga el modelo una vez en su
-            navegador (Chrome o Edge) y queda guardado ahí.
-          </p>
-          <BrowserModelManager />
-        </div>
-
-        <details className="rounded-lg border border-line p-4">
-          <summary className="cursor-pointer text-sm font-semibold">En el servidor (whisper.cpp)</summary>
-          <p className="mt-2 mb-3 text-xs text-muted">
-            Para cuando Logoscribe corre en un computador de la iglesia con buena capacidad. Los modelos se descargan una
-            sola vez al servidor y quedan disponibles para todo el equipo.
+            Whisper transcribe con el procesador de este computador. El modelo se descarga una sola vez.
           </p>
           <ModelManager onActiveChange={(p) => setDraft((d) => (d ? { ...d, localModelPath: p } : d))} />
           <details className="mt-3 text-sm">
@@ -110,7 +99,7 @@ export function SettingsForm() {
               <TestButton engine="local" />
             </div>
           </details>
-        </details>
+        </div>
 
         <div className="rounded-lg border border-line p-4">
           <div className="mb-2 flex flex-wrap items-center justify-between gap-2">

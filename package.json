@@ -3,18 +3,17 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "concurrently -k -n web,worker -c blue,magenta \"next dev\" \"pnpm worker:dev\"",
-    "dev:web": "next dev",
+    "dev": "concurrently -k -n web,worker -c blue,magenta \"node --disable-warning=ExperimentalWarning ./node_modules/next/dist/bin/next dev\" \"pnpm worker:dev\"",
+    "dev:web": "node --disable-warning=ExperimentalWarning ./node_modules/next/dist/bin/next dev",
     "worker": "node --use-system-ca --env-file-if-exists=.env.local --disable-warning=ExperimentalWarning --import tsx src/worker/index.ts",
     "worker:dev": "tsx watch --use-system-ca --clear-screen=false --exclude \"data/**\" --env-file-if-exists=.env.local --disable-warning=ExperimentalWarning src/worker/index.ts",
-    "build": "next build",
-    "start": "concurrently -k -n web,worker \"next start\" \"pnpm worker\"",
+    "build": "node --disable-warning=ExperimentalWarning ./node_modules/next/dist/bin/next build",
+    "start": "concurrently -k -n web,worker \"node --disable-warning=ExperimentalWarning ./node_modules/next/dist/bin/next start -p 3131\" \"pnpm worker\"",
     "lint": "eslint",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.128.0",
-    "@huggingface/transformers": "^4.3.0",
     "docx": "^9.7.2",
     "nanoid": "^6.0.1",
     "next": "16.3.6",

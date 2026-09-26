@@ -1,7 +1,8 @@
 import { spawn } from "node:child_process";
+import { tool } from "./tools";
 
-const FFMPEG = process.env.FFMPEG_PATH ?? "ffmpeg";
-const FFPROBE = process.env.FFPROBE_PATH ?? "ffprobe";
+const FFMPEG = tool("ffmpeg");
+const FFPROBE = tool("ffprobe");
 
 export function run(
   cmd: string,

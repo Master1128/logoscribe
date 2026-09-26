@@ -46,3 +46,6 @@ next-env.d.ts
 
 # herramientas locales de desarrollo
 /.claude
+
+# herramientas descargadas por el instalador de Windows
+/tools

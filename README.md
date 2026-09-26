@@ -1,74 +1,78 @@
 # Logoscribe
 
-Convierte la grabación completa de un culto (alabanza + prédica) en una prédica transcrita, organizada en párrafos y lista para estudiar, buscar y exportar a Word o PDF.
+Convierte la grabación completa de un culto (alabanza + prédica) en una prédica transcrita, organizada en párrafos y lista para estudiar, buscar y exportar a Word o PDF. Todo corre en tu propio computador: sin costos por uso y sin enviar el audio a ningún servicio.
 
-## Flujo
+## Instalación
 
-1. **Subir** el audio del culto (MP3, M4A, WAV, OGG…) o **pegar el enlace compartido de OneDrive**.
-2. **Análisis automático**: la app separa voz de música y propone dónde empieza y termina la prédica.
-3. **Revisar el recorte** sobre la forma de onda: escuchar el inicio y el final, ajustar con los botones o arrastrando.
-4. **Transcribir** solo ese tramo, con Whisper local (gratis) u OpenAI / Groq (nube).
-5. **Organizar**: se divide en párrafos (y títulos de sección si se usa Claude) **sin cambiar ninguna palabra**. El organizador solo decide dónde empieza cada párrafo.
-6. **Revisar y editar** con el audio sincronizado: clic en un párrafo para editarlo, Enter para dividir, Retroceso al inicio para unir, ▶ para escuchar desde ahí.
-7. **Exportar** a Word o PDF con portada, numeración de páginas, citas bíblicas en negrita e índice de citas.
+Necesitas acceso a este repositorio en GitHub (pídeselo al administrador) y unos 3 GB libres.
 
-La biblioteca permite buscar cualquier palabra dicha en cualquier prédica, sin importar las tildes.
+### Mac
 
-## Requisitos
+1. Descarga el proyecto: botón verde **Code → Download ZIP** en GitHub, y descomprímelo en *Documentos*.
+   (Si usas git: `git clone` en la carpeta que prefieras).
+2. Abre la carpeta y haz **clic derecho → Abrir** sobre `instalar-mac.command` (la primera vez macOS pide confirmar).
+3. Espera a que termine (10–20 minutos la primera vez). Puede pedirte la contraseña del Mac.
 
-- Node.js 24 o superior (usa el SQLite integrado de Node)
-- pnpm
-- ffmpeg (`brew install ffmpeg`)
-- whisper.cpp para transcribir localmente (`brew install whisper-cpp`)
+### Windows 10/11
 
-## Puesta en marcha
+1. Descarga el proyecto (**Code → Download ZIP**) y descomprímelo en *Documentos*.
+2. Doble clic en `instalar-windows.bat`. Si Windows muestra «Windows protegió tu PC», elige **Más información → Ejecutar de todas formas**.
+3. Espera a que termine (10–20 minutos la primera vez).
+
+El instalador deja un acceso directo **Logoscribe** en el Escritorio.
+
+### Primer uso
+
+1. Abre **Logoscribe** desde el Escritorio. Se abre una ventana negra (déjala abierta mientras lo usas) y el navegador en `http://localhost:3131`.
+2. Ve a **Ajustes** y descarga el modelo **Large v3 Turbo** (≈1,6 GB, una sola vez). En computadores con 8 GB de memoria o menos, usa el **comprimido**.
+3. Listo: **Nueva prédica** → sube el audio del culto.
+
+Para apagar Logoscribe, cierra la ventana negra.
+
+### Actualizar
+
+Cierra Logoscribe y ejecuta `actualizar-mac.command` o `actualizar-windows.bat`. (Requiere haber descargado el proyecto con git; si lo descargaste como ZIP, descarga el ZIP nuevo, descomprímelo encima y vuelve a ejecutar el instalador. Tus prédicas están en la carpeta `data` y no se pierden.)
+
+## Cómo se usa
+
+1. **Subir** el audio del culto (MP3, M4A, WAV…) o pegar el enlace compartido de OneDrive.
+2. La app separa voz de música y **propone dónde empieza y termina la prédica**.
+3. **Revisar el recorte** sobre la forma de onda: escuchar el inicio y el final, ajustar si hace falta.
+4. **Transcribir** ese tramo con Whisper en tu computador.
+5. Se organiza en **párrafos sin cambiar ninguna palabra**.
+6. **Revisar y editar** con el audio sincronizado: clic en un párrafo para editarlo, Enter divide, Retroceso al inicio une, ▶ escucha desde ahí.
+7. **Exportar** a Word o PDF con portada, números de página, citas bíblicas en negrita e índice de citas.
+
+La biblioteca busca cualquier palabra dicha en tus prédicas, sin importar las tildes. Cada computador tiene su propia biblioteca (carpeta `data`).
+
+## Velocidad de referencia
+
+| Computador | Prédica de 1 hora |
+| --- | --- |
+| Mac con chip M4 (16 GB), Large v3 Turbo | ≈ 4 minutos (medido) |
+| Windows con procesador, sin tarjeta gráfica | Bastante más lento (sin medir aún); el modelo comprimido ayuda |
+
+## Opcional: motores en la nube
+
+En `.env.local` (ver `.env.example`) se pueden configurar OpenAI (o un servidor compatible), Groq y Claude (para títulos de sección). No son necesarios.
+
+## Para desarrolladores
 
 ```bash
 pnpm install
-pnpm dev                     # levanta la web (http://localhost:3000) y el worker
+pnpm dev          # web en http://localhost:3000 + worker con recarga
+pnpm typecheck && pnpm lint
 ```
 
-Luego, en **Ajustes → Whisper local**, descarga el modelo **Large v3 Turbo** (≈1,6 GB, una sola vez). Se activa solo al terminar, junto con el detector de voz (Silero VAD). Desde ahí también se pueden activar o eliminar otros modelos.
-
-`pnpm dev` arranca dos procesos: la aplicación web y el **worker**, que hace el trabajo pesado (descargas, ffmpeg, Whisper, organización). Si el worker no está corriendo, las prédicas se quedan "en cola".
-
-En producción: `pnpm build && pnpm start`.
-
-### Rendimiento de referencia
-
-Mac con chip M4 (16 GB), Large v3 Turbo + VAD: una prédica de 68 minutos se transcribe en unos 4 minutos, sin costo.
-
-## Motores en la nube (opcionales)
-
-Configurables en `.env.local` (ver `.env.example`); las claves solo se leen en el servidor.
-
-| Variable | Para qué |
-| --- | --- |
-| `OPENAI_API_KEY` / `OPENAI_BASE_URL` | Whisper de OpenAI o de un servidor compatible (LiteLLM, etc.) |
-| `GROQ_API_KEY` | Groq (muy rápido; la cuenta gratuita permite ~2 h de audio por hora) |
-| `ANTHROPIC_API_KEY` | Organizar párrafos por idea y títulos de sección con Claude. Sin ella se usa el organizador básico. |
-
-Con motores en la nube la app reintenta sola cuando se alcanza un límite de uso y repara tramos que Whisper se salta o decodifica mal. En Ajustes, "Probar conexión" verifica cada motor.
-
-## Estructura
+- Next.js 16 (App Router) + un **worker** (`src/worker`) que procesa la tabla `jobs`: importar, analizar, transcribir, organizar y descargar modelos.
+- SQLite integrado de Node (`node:sqlite`) con búsqueda FTS5; datos en `data/` (no se versiona).
+- Las herramientas (`ffmpeg`, `ffprobe`, `whisper-cli`) se buscan en: variable de entorno → `tools/bin` → PATH (`src/lib/tools.ts`).
+- `scripts/`: `smoke.ts` (pipeline completo), `detect.ts` (detección voz/música), `compare.ts` (comparar transcripciones).
 
 ```
 src/
-  app/                 páginas (biblioteca, nueva, predicas/[id], ajustes) y API
-  components/          UI: editor de recorte (wavesurfer), editor de transcripción…
-  lib/
-    detect.ts          detección voz/música y propuesta de la prédica
-    transcribe.ts      motores: whisper.cpp local, OpenAI, Groq (por partes de ~10 min cortadas en pausas)
-    format.ts          oraciones → párrafos/secciones (Claude o heurística), sin tocar el texto
-    bible.ts           detección de citas bíblicas escritas y habladas
-    export/            Word (docx) y PDF (pdfkit)
-    db.ts, repo.ts     SQLite + búsqueda de texto completo (FTS5)
-  worker/              cola de trabajos (analizar, transcribir, organizar)
-data/                  audios, base de datos y modelos (no se versiona)
+  app/          páginas (biblioteca, nueva, predicas/[id], ajustes) y API
+  components/   editor de recorte (wavesurfer), editor de transcripción, gestor de modelos…
+  lib/          detect, transcribe, format, bible, export/, models, repo/db
+  worker/       cola de trabajos y descargas de modelos
 ```
-
-## Próximos pasos
-
-- Navegar carpetas de OneDrive con inicio de sesión de Microsoft (hoy se importa pegando el enlace compartido).
-- Inicio de sesión para el equipo de medios y despliegue en un servidor.
-- Insertar el texto de los versículos citados (Reina-Valera 1909, de dominio público).
