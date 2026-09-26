@@ -3,24 +3,39 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "concurrently -k -n web,worker -c blue,magenta \"next dev\" \"pnpm worker:dev\"",
+    "dev:web": "next dev",
+    "worker": "node --use-system-ca --env-file-if-exists=.env.local --disable-warning=ExperimentalWarning --import tsx src/worker/index.ts",
+    "worker:dev": "tsx watch --use-system-ca --clear-screen=false --exclude \"data/**\" --env-file-if-exists=.env.local --disable-warning=ExperimentalWarning src/worker/index.ts",
     "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
+    "start": "concurrently -k -n web,worker \"next start\" \"pnpm worker\"",
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.128.0",
+    "@huggingface/transformers": "^4.3.0",
+    "docx": "^9.7.2",
+    "nanoid": "^6.0.1",
     "next": "16.3.6",
+    "openai": "^7.23.0",
+    "pdfkit": "^0.20.2",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "wavesurfer.js": "^8.0.1",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
+    "@types/node": "^24.13.6",
+    "@types/pdfkit": "^0.17.6",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "concurrently": "^10.0.5",
     "eslint": "^9",
     "eslint-config-next": "16.3.6",
     "tailwindcss": "^4",
+    "tsx": "^4.23.15",
     "typescript": "^5"
   },
   "packageManager": "pnpm@12.3.4"

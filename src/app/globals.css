@@ -1,26 +1,86 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --paper: #f7f4ee;
+  --surface: #ffffff;
+  --ink: #1f2430;
+  --muted: #6b6f7a;
+  --line: #e4ded3;
+  --accent: #2b3a55;
+  --accent-soft: #e6e9f1;
+  --gold: #a87a2a;
+  --gold-soft: #f6ecd6;
+  --ok: #2f7a4f;
+  --danger: #b3412f;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --paper: #15171c;
+    --surface: #1d2027;
+    --ink: #e9e6df;
+    --muted: #9a9ea8;
+    --line: #2e323b;
+    --accent: #9fb3dd;
+    --accent-soft: #262d3d;
+    --gold: #e0b563;
+    --gold-soft: #3a3021;
+    --ok: #6cc592;
+    --danger: #ec8a78;
   }
 }
 
+@theme inline {
+  --color-paper: var(--paper);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-gold: var(--gold);
+  --color-gold-soft: var(--gold-soft);
+  --color-ok: var(--ok);
+  --color-danger: var(--danger);
+  --font-sans: var(--font-inter);
+  --font-serif: var(--font-literata);
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+mark {
+  background: var(--gold-soft);
+  color: inherit;
+  border-radius: 2px;
+  padding: 0 1px;
+}
+
+.reading {
+  font-family: var(--font-literata), Georgia, serif;
+  font-size: 1.125rem;
+  line-height: 1.85;
+}
+
+@utility btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition
+    disabled:cursor-not-allowed disabled:opacity-50;
+}
+@utility btn-primary {
+  @apply btn bg-accent text-surface hover:opacity-90;
+}
+@utility btn-ghost {
+  @apply btn border border-line bg-surface text-ink hover:bg-accent-soft;
+}
+@utility input {
+  @apply w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink outline-none
+    placeholder:text-muted focus:border-accent focus:ring-2 focus:ring-accent/20;
+}
+@utility label {
+  @apply mb-1 block text-xs font-semibold uppercase tracking-wide text-muted;
+}
+@utility card {
+  @apply rounded-xl border border-line bg-surface;
 }
