@@ -17,6 +17,10 @@ fi
 
 echo "Instalando ffmpeg y whisper.cpp…"
 brew install ffmpeg whisper-cpp
+if ! command -v whisper-cli >/dev/null 2>&1 && ! command -v whisper-cpp >/dev/null 2>&1; then
+  echo "✗ whisper.cpp no quedó instalado. Ejecuta «brew install whisper-cpp» y comparte el mensaje que aparezca."
+  exit 1
+fi
 
 # Logoscribe usa el SQLite integrado de Node 24 o superior.
 NODE_MAJOR=$(node -v 2>/dev/null | sed 's/v\([0-9]*\).*/\1/' || echo 0)

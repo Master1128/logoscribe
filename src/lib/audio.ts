@@ -1,8 +1,6 @@
 import { spawn } from "node:child_process";
 import { tool } from "./tools";
 
-const FFMPEG = tool("ffmpeg");
-const FFPROBE = tool("ffprobe");
 
 export function run(
   cmd: string,
@@ -28,7 +26,7 @@ export function run(
 }
 
 export async function probeDuration(file: string): Promise<number> {
-  const out = await run(FFPROBE, ["-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", file]);
+  const out = await run(tool("ffprobe"), ["-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", file]);
   const duration = parseFloat(out.trim());
   if (!Number.isFinite(duration)) throw new Error("No se pudo leer la duración del audio");
   return duration;
@@ -47,7 +45,7 @@ function ffmpegProgress(total: number, onProgress?: (fraction: number) => void) 
 
 /** Mono MP3 small enough to stream and seek in the browser. */
 export function transcodePreview(src: string, dst: string, duration: number, onProgress?: (f: number) => void, signal?: AbortSignal) {
-  return run(FFMPEG, ["-y", "-i", src, "-vn", "-ac", "1", "-ar", "22050", "-b:a", "48k", dst], {
+  return run(tool("ffmpeg"), ["-y", "-i", src, "-vn", "-ac", "1", "-ar", "22050", "-b:a", "48k", dst], {
     onStderr: ffmpegProgress(duration, onProgress),
     signal,
   });
@@ -61,7 +59,7 @@ export function extractClip(src: string, start: number, end: number, dst: string
     format === "wav16k" ? ["-c:a", "pcm_s16le"]
     : format === "flac16k" ? ["-c:a", "flac"]
     : ["-c:a", "libmp3lame", "-b:a", "32k"];
-  return run(FFMPEG, [
+  return run(tool("ffmpeg"), [
     "-y",
     "-ss", start.toFixed(3),
     "-to", end.toFixed(3),
@@ -82,7 +80,7 @@ export function decodePcm(
   onSamples: (samples: Int16Array) => void,
 ): Promise<void> {
   return new Promise((resolve, reject) => {
-    const child = spawn(FFMPEG, ["-v", "error", "-i", src, "-vn", "-ac", "1", "-ar", String(sampleRate), "-f", "s16le", "-"], {
+    const child = spawn(tool("ffmpeg"), ["-v", "error", "-i", src, "-vn", "-ac", "1", "-ar", String(sampleRate), "-f", "s16le", "-"], {
       stdio: ["ignore", "pipe", "pipe"],
     });
     let leftover: Buffer | null = null;

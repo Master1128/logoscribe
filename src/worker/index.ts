@@ -57,8 +57,8 @@ function reportSetup() {
   const settings = getSettings();
   const ffmpegOk = !spawnSync(tool("ffmpeg"), ["-version"], { stdio: "ignore" }).error;
   const lines = [
-    ffmpegOk ? "✓ ffmpeg" : "✗ Falta ffmpeg: vuelve a ejecutar el instalador",
-    whisperCliAvailable() ? "✓ whisper.cpp" : "✗ Falta whisper.cpp: vuelve a ejecutar el instalador",
+    ffmpegOk ? `✓ ffmpeg (${tool("ffmpeg")})` : "✗ Falta ffmpeg: vuelve a ejecutar el instalador",
+    whisperCliAvailable() ? `✓ whisper.cpp (${tool("whisper-cli")})` : "✗ Falta whisper.cpp: vuelve a ejecutar el instalador",
     fs.existsSync(settings.localModelPath)
       ? `✓ Modelo de transcripción: ${path.basename(settings.localModelPath)}`
       : "✗ Falta el modelo de transcripción: descárgalo en Ajustes",
