@@ -31,7 +31,16 @@ Para apagar Logoscribe, cierra la ventana negra.
 
 ### Actualizar
 
-Cierra Logoscribe y ejecuta `actualizar-mac.command` o `actualizar-windows.bat`. (Requiere haber descargado el proyecto con git; si lo descargaste como ZIP, descarga el ZIP nuevo, descomprímelo encima y vuelve a ejecutar el instalador. Tus prédicas están en la carpeta `data` y no se pierden.)
+Cierra Logoscribe y ejecuta `actualizar-mac.command` o `actualizar-windows.bat`. (Requiere haber descargado el proyecto con git; si lo descargaste como ZIP, descarga el ZIP nuevo, descomprímelo encima y vuelve a ejecutar el instalador. Tus prédicas no se pierden: están guardadas aparte, ver «Dónde se guardan las prédicas».)
+
+### Dónde se guardan las prédicas
+
+La biblioteca, los audios y el modelo se guardan fuera de la carpeta del programa, en una carpeta que iCloud y OneDrive no sincronizan (sincronizarla mientras se escribe puede dañar la biblioteca):
+
+- **Mac:** `~/Library/Application Support/Logoscribe`
+- **Windows:** `%LOCALAPPDATA%\Logoscribe`
+
+Las versiones anteriores usaban la carpeta `data` del proyecto; se mueve sola la primera vez que abres la nueva versión.
 
 ## Cómo se usa
 
@@ -43,7 +52,7 @@ Cierra Logoscribe y ejecuta `actualizar-mac.command` o `actualizar-windows.bat`.
 6. **Revisar y editar** con el audio sincronizado: clic en un párrafo para editarlo, Enter divide, Retroceso al inicio une, ▶ escucha desde ahí.
 7. **Exportar** a Word o PDF con portada, números de página, citas bíblicas en negrita e índice de citas.
 
-La biblioteca busca cualquier palabra dicha en tus prédicas, sin importar las tildes. Cada computador tiene su propia biblioteca (carpeta `data`).
+La biblioteca busca cualquier palabra dicha en tus prédicas, sin importar las tildes. Cada computador tiene su propia biblioteca.
 
 ## Velocidad de referencia
 
@@ -70,7 +79,8 @@ pnpm typecheck && pnpm lint
 ```
 
 - Next.js 16 (App Router) + un **worker** (`src/worker`) que procesa la tabla `jobs`: importar, analizar, transcribir, organizar y descargar modelos.
-- SQLite integrado de Node (`node:sqlite`) con búsqueda FTS5; datos en `data/` (no se versiona).
+- SQLite integrado de Node (`node:sqlite`) con búsqueda FTS5; datos en la carpeta de datos de aplicaciones del sistema (`src/lib/paths.ts`, o `LOGOSCRIBE_DATA_DIR`).
+- La compilación va a `.next.nosync` para que iCloud Drive no la sincronice.
 - Las herramientas (`ffmpeg`, `ffprobe`, `whisper-cli`) se buscan en: variable de entorno → `tools/bin` → PATH (`src/lib/tools.ts`).
 - `scripts/`: `smoke.ts` (pipeline completo), `detect.ts` (detección voz/música), `compare.ts` (comparar transcripciones).
 

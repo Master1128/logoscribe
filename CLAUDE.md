@@ -2,7 +2,9 @@
 
 # Logoscribe — notas del proyecto
 
-- Distribución: cada persona instala Logoscribe en su computador (Mac o Windows) con `instalar-*.command/.bat`; corre en http://localhost:3131 (`pnpm start`). Cada instalación tiene su propia biblioteca en `data/`.
+- Distribución: cada persona instala Logoscribe en su computador (Mac o Windows) con `instalar-*.command/.bat`; corre en http://localhost:3131 (`pnpm start`). Cada instalación tiene su propia biblioteca en la carpeta de datos de aplicaciones (Mac: `~/Library/Application Support/Logoscribe`, Windows: `%LOCALAPPDATA%\Logoscribe`), nunca junto al código: Documentos suele estar sincronizado por iCloud/OneDrive y eso duplica archivos ("archivo 2") y puede dañar SQLite. `./data` de versiones viejas se mueve sola (`db.ts`).
+- Build en `.next.nosync` (iCloud no sincroniza carpetas `*.nosync`).
+- Texto guardado siempre en NFC (títulos pegados de nombres de archivo de macOS vienen en NFD y rompían el PDF).
 - Transcripción por defecto: whisper.cpp local (modelos se descargan desde Ajustes). La transcripción en navegador (WebGPU) se quitó: Chrome no logra cargar los modelos por memoria.
 - UI y mensajes en español. Next.js 16 (App Router) + worker en `src/worker` (tsx) que procesa la tabla `jobs`.
 - DB: `node:sqlite` (sin dependencias nativas), FTS5 con `remove_diacritics`. Nada de ORM; SQL en `src/lib/repo.ts`.
