@@ -6,6 +6,7 @@ import { api } from "@/lib/ui";
 
 interface ModelsState {
   whisperCli: boolean;
+  searchedDirs: string[];
   models: { downloaded: boolean; active: boolean }[];
   customModel: string | null;
   customModelFound: boolean;
@@ -29,6 +30,7 @@ export function SetupNotice() {
         <p className="mt-1 text-sm text-muted">
           No se encontró whisper.cpp en este computador. Vuelve a ejecutar el instalador de Logoscribe
           (<code>instalar-mac.command</code> o <code>instalar-windows.bat</code>).
+          <span className="mt-1 block text-xs">Se buscó en: <code className="break-all">{state.searchedDirs.join(" · ")}</code></span>
         </p>
       ) : (
         <p className="mt-1 text-sm text-muted">

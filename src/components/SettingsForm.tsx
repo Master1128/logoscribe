@@ -264,6 +264,12 @@ export function SettingsForm() {
         <button className="btn-primary" onClick={() => save()}>Guardar ajustes</button>
         {status && <span className="text-sm text-muted">{status}</span>}
       </div>
+      {process.env.NEXT_PUBLIC_BUILD_DATE && (
+        <p className="text-xs text-muted">
+          Versión instalada:{" "}
+          {new Date(process.env.NEXT_PUBLIC_BUILD_DATE).toLocaleString("es", { dateStyle: "long", timeStyle: "short" })}
+        </p>
+      )}
     </div>
   );
 }

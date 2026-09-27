@@ -2,6 +2,7 @@ import fs from "node:fs";
 import {
   findModel, getDownloads, isDownloaded, modelPath, MODELS, queueDownload, updateDownload, VAD, whisperCliAvailable,
 } from "@/lib/models";
+import { searchedDirs } from "@/lib/tools";
 import { getSettings, saveSettings } from "@/lib/settings";
 
 function state() {
@@ -22,6 +23,7 @@ function state() {
   };
   return {
     whisperCli: whisperCliAvailable(),
+    searchedDirs: whisperCliAvailable() ? [] : searchedDirs(),
     activePath: settings.localModelPath,
     models: MODELS.map(describe),
     vad: describe(VAD),

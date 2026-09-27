@@ -22,6 +22,15 @@ const EXTRA_DIRS = process.platform === "darwin" ? ["/opt/homebrew/bin", "/usr/l
 
 const found = new Map<Tool, string>();
 
+/** Folders searched for the tools, for diagnostics shown to the user. */
+export function searchedDirs(): string[] {
+  return [
+    path.join(/*turbopackIgnore: true*/ process.cwd(), "tools", "bin"),
+    ...(process.env.PATH ?? "").split(path.delimiter).filter(Boolean),
+    ...EXTRA_DIRS,
+  ].filter((d, i, all) => all.indexOf(d) === i);
+}
+
 export function tool(name: Tool): string {
   const cached = found.get(name);
   if (cached) return cached;
@@ -30,12 +39,7 @@ export function tool(name: Tool): string {
   if (fromEnv) return remember(name, fromEnv);
 
   const exe = (n: string) => (process.platform === "win32" ? `${n}.exe` : n);
-  const dirs = [
-    path.join(/*turbopackIgnore: true*/ process.cwd(), "tools", "bin"),
-    ...(process.env.PATH ?? "").split(path.delimiter).filter(Boolean),
-    ...EXTRA_DIRS,
-  ];
-  for (const dir of dirs) {
+  for (const dir of searchedDirs()) {
     for (const n of NAMES[name]) {
       const candidate = path.join(dir, exe(n));
       if (isExecutable(candidate)) return remember(name, candidate);

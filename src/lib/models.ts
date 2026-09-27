@@ -4,7 +4,6 @@
  */
 import fs from "node:fs";
 import path from "node:path";
-import { spawnSync } from "node:child_process";
 import { db } from "./db";
 import { DATA_DIR } from "./paths";
 import { tool } from "./tools";
@@ -138,14 +137,13 @@ export function requeueStaleDownloads() {
 
 // ---------------------------------------------------------------- environment
 
-let whisperCache: { ok: boolean; at: number } | null = null;
-
-/** Whether the whisper.cpp command line tool is installed on the server. */
+/**
+ * Whether whisper.cpp is installed. Only checks that the program exists:
+ * running it (`--help`) can take over 10 s the first time on some Macs while
+ * macOS scans the new binary and Metal prepares, which read as "missing".
+ */
 export function whisperCliAvailable(): boolean {
-  if (whisperCache && Date.now() - whisperCache.at < 60_000) return whisperCache.ok;
-  const res = spawnSync(tool("whisper-cli"), ["--help"], { stdio: "ignore", timeout: 10_000 });
-  whisperCache = { ok: !res.error, at: Date.now() };
-  return whisperCache.ok;
+  return path.isAbsolute(tool("whisper-cli"));
 }
 
 export function isDownloaded(m: ModelDef) {
