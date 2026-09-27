@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { DeleteSermonButton } from "./DeleteSermonButton";
 import { SetupNotice } from "./SetupNotice";
 import { StatusBadge } from "./StatusBadge";
 import { api, formatDate, formatTime } from "@/lib/ui";
@@ -87,8 +88,8 @@ export function Library() {
       ) : (
         <ul className="grid gap-3">
           {visible.map(({ sermon, snippet }) => (
-            <li key={sermon.id}>
-              <Link href={`/predicas/${sermon.id}`} className="card block p-4 transition hover:border-accent/40 hover:shadow-sm">
+            <li key={sermon.id} className="relative">
+              <Link href={`/predicas/${sermon.id}`} className="card block p-4 pr-14 transition hover:border-accent/40 hover:shadow-sm">
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div>
                     <h2 className="font-serif text-lg font-semibold">{sermon.title}</h2>
@@ -107,6 +108,12 @@ export function Library() {
                   <p className="reading mt-2 text-base text-ink/80" dangerouslySetInnerHTML={{ __html: snippet }} />
                 )}
               </Link>
+              <DeleteSermonButton
+                variant="icon"
+                sermon={sermon}
+                className="absolute top-3 right-3"
+                onDeleted={() => setHits((prev) => prev?.filter((h) => h.sermon.id !== sermon.id) ?? prev)}
+              />
             </li>
           ))}
         </ul>

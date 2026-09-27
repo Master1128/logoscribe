@@ -6,6 +6,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { whisperCliAvailable } from "@/lib/models";
+import { sermonDir } from "@/lib/paths";
 import { getSettings } from "@/lib/settings";
 import { tool } from "@/lib/tools";
 import { claimJob, getSermon, jobStatus, requeueStale, setStatus, updateJob } from "@/lib/repo";
@@ -48,6 +49,8 @@ async function lane(types: Job["type"][]) {
       if (getSermon(job.sermon_id)) setStatus(job.sermon_id, "failed", message);
     } finally {
       clearInterval(watch);
+      // Deleted while running: drop any files the job wrote after the delete.
+      if (!getSermon(job.sermon_id)) fs.rmSync(sermonDir(job.sermon_id), { recursive: true, force: true });
     }
   }
 }

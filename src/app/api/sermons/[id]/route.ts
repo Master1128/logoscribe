@@ -1,5 +1,5 @@
 import { uniqueRefs } from "@/lib/bible";
-import { activeJob, deleteSermon, getBlocks, getSermon, updateSermon } from "@/lib/repo";
+import { activeJob, cancelJob, deleteSermon, getBlocks, getSermon, updateSermon } from "@/lib/repo";
 
 export async function GET(_req: Request, ctx: RouteContext<"/api/sermons/[id]">) {
   const { id } = await ctx.params;
@@ -40,6 +40,10 @@ export async function PATCH(request: Request, ctx: RouteContext<"/api/sermons/[i
 
 export async function DELETE(_req: Request, ctx: RouteContext<"/api/sermons/[id]">) {
   const { id } = await ctx.params;
+  if (!getSermon(id)) return Response.json({ error: "No encontrada" }, { status: 404 });
+  // Stop any running work first; the worker cleans up files it writes after this.
+  const running = activeJob(id);
+  if (running) cancelJob(running.id);
   deleteSermon(id);
   return new Response(null, { status: 204 });
 }

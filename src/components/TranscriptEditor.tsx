@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { DeleteSermonButton } from "./DeleteSermonButton";
 import { findBibleRefs, uniqueRefs } from "@/lib/bible";
 import { api, formatTime, type SermonPayload } from "@/lib/ui";
 import type { Block, Sermon } from "@/lib/types";
@@ -245,16 +246,7 @@ export function TranscriptEditor({
               >
                 Ajustar recorte y transcribir de nuevo
               </button>
-              <button
-                className="btn-ghost justify-start py-1.5 text-xs text-danger"
-                onClick={async () => {
-                  if (!confirm(`¿Eliminar "${sermon.title}" con su audio y transcripción? No se puede deshacer.`)) return;
-                  await api(`/api/sermons/${sermon.id}`, { method: "DELETE" });
-                  router.push("/");
-                }}
-              >
-                Eliminar prédica
-              </button>
+              <DeleteSermonButton sermon={sermon} onDeleted={() => router.push("/")} className="justify-start py-1.5 text-xs" />
             </div>
           </section>
         </aside>

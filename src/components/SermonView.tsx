@@ -2,12 +2,15 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { DeleteSermonButton } from "./DeleteSermonButton";
 import { StatusBadge } from "./StatusBadge";
 import { TrimEditor } from "./TrimEditor";
 import { TranscriptEditor } from "./TranscriptEditor";
 import { api, formatDate, PROCESSING, type SermonPayload } from "@/lib/ui";
 
 export function SermonView({ id }: { id: string }) {
+  const router = useRouter();
   const [data, setData] = useState<SermonPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -40,6 +43,7 @@ export function SermonView({ id }: { id: string }) {
           <div className="mt-2 flex flex-wrap items-center gap-3">
             <h1 className="font-serif text-3xl font-semibold">{sermon.title}</h1>
             <StatusBadge status={sermon.status} />
+            <DeleteSermonButton sermon={sermon} onDeleted={() => router.push("/")} className="ml-auto px-3 py-1 text-xs" />
           </div>
         )}
         {sermon.status !== "ready" && (
