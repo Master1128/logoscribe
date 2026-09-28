@@ -4,7 +4,7 @@ import type { BibleRef } from "./bible";
 export { formatTime, formatDate } from "./export/common";
 
 export const STATUS_LABEL: Record<SermonStatus, string> = {
-  importing: "Descargando de OneDrive",
+  importing: "Descargando el audio",
   uploaded: "En cola",
   analyzing: "Analizando audio",
   review: "Revisar recorte",

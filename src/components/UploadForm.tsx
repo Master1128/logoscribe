@@ -2,8 +2,17 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { api } from "@/lib/ui";
+import { PodcastBrowser } from "./PodcastBrowser";
+import { api, formatTime } from "@/lib/ui";
+import type { SourcePreview } from "@/lib/sources";
 import type { Sermon } from "@/lib/types";
+
+const KIND_LABEL: Record<SourcePreview["kind"], string> = {
+  youtube: "Video de YouTube",
+  podcast: "Episodio del podcast",
+  audio: "Archivo de audio",
+  onedrive: "Archivo de OneDrive",
+};
 
 /** Guesses the service date from names like "2026-09-20 culto.mp3" or "20260920.m4a". */
 function dateFromFile(file: File): string {
@@ -15,7 +24,8 @@ function dateFromFile(file: File): string {
 
 export function UploadForm() {
   const router = useRouter();
-  const [mode, setMode] = useState<"file" | "link">("file");
+  const [mode, setMode] = useState<"file" | "link" | "podcast">("file");
+  const [preview, setPreview] = useState<{ state: "idle" | "loading" | "ok" | "error"; data?: SourcePreview; error?: string }>({ state: "idle" });
   const [file, setFile] = useState<File | null>(null);
   const [link, setLink] = useState("");
   const [form, setForm] = useState({ title: "", preacher: "", series: "", service_date: "" });
@@ -34,6 +44,33 @@ export function UploadForm() {
     setFile(f);
     setForm((prev) => ({ ...prev, service_date: prev.service_date || dateFromFile(f) }));
   };
+
+  // Recognize a pasted link and prefill title, date, preacher and series.
+  useEffect(() => {
+    const url = link.trim();
+    if (mode !== "link" || !/^https?:\/\/\S+\.\S+/.test(url)) return;
+    let cancelled = false;
+    const t = setTimeout(async () => {
+      setPreview({ state: "loading" });
+      try {
+        const { preview: data } = await api<{ preview: SourcePreview }>("/api/import/preview", {
+          method: "POST",
+          body: JSON.stringify({ url }),
+        });
+        if (cancelled) return;
+        setPreview({ state: "ok", data });
+        setForm((prev) => ({
+          title: data.title ?? prev.title,
+          preacher: data.preacher ?? prev.preacher,
+          series: data.series ?? prev.series,
+          service_date: data.date ?? prev.service_date,
+        }));
+      } catch (err) {
+        if (!cancelled) setPreview({ state: "error", error: (err as Error).message });
+      }
+    }, 500);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [link, mode]);
 
   const set = (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((prev) => ({ ...prev, [key]: e.target.value }));
@@ -68,10 +105,9 @@ export function UploadForm() {
     }
   }
 
-  return (
-    <form onSubmit={submit} className="card space-y-5 p-6">
-      <div className="grid grid-cols-2 gap-1 rounded-lg bg-paper p-1 text-sm" role="tablist">
-        {([["file", "Subir archivo"], ["link", "Enlace de OneDrive"]] as const).map(([m, label]) => (
+  const tabs = (
+      <div className="grid grid-cols-3 gap-1 rounded-lg bg-paper p-1 text-sm" role="tablist">
+        {([["file", "Archivo"], ["link", "Enlace"], ["podcast", "Podcast"]] as const).map(([m, label]) => (
           <button
             key={m}
             type="button"
@@ -84,6 +120,20 @@ export function UploadForm() {
           </button>
         ))}
       </div>
+  );
+
+  if (mode === "podcast") {
+    return (
+      <div className="card space-y-5 p-6">
+        {tabs}
+        <PodcastBrowser />
+      </div>
+    );
+  }
+
+  return (
+    <form onSubmit={submit} className="card space-y-5 p-6">
+      {tabs}
 
       {mode === "file" ? (
         <div
@@ -111,23 +161,34 @@ export function UploadForm() {
           )}
           <input ref={input} type="file" accept="audio/*,video/mp4,.m4a,.amr" hidden onChange={(e) => pick(e.target.files?.[0])} />
         </div>
-      ) : (
+      ) : mode === "link" ? (
         <div>
-          <label className="label" htmlFor="link">Enlace compartido de OneDrive</label>
+          <label className="label" htmlFor="link">Enlace</label>
           <input
             id="link"
             type="url"
             className="input"
-            placeholder="https://1drv.ms/u/…"
+            placeholder="https://youtu.be/…  ·  enlace del podcast  ·  OneDrive"
             value={link}
             onChange={(e) => setLink(e.target.value)}
             required
           />
           <p className="mt-1 text-xs text-muted">
-            En OneDrive: clic derecho sobre el audio → Compartir → «Cualquier persona con el vínculo» → Copiar vínculo.
+            Sirve un video de YouTube, un episodio del podcast (Spotify), un enlace directo a un audio o un archivo
+            compartido de OneDrive («Cualquier persona con el vínculo»).
           </p>
+          {preview.state === "loading" && <p className="mt-2 text-sm text-muted">Revisando el enlace…</p>}
+          {preview.state === "error" && <p className="mt-2 text-sm text-danger">{preview.error}</p>}
+          {preview.state === "ok" && preview.data && (
+            <p className="mt-2 rounded-lg bg-ok/10 px-3 py-2 text-sm text-ok">
+              {KIND_LABEL[preview.data.kind]}
+              {preview.data.title ? ` · ${preview.data.title}` : ""}
+              {preview.data.durationSec ? ` · ${formatTime(preview.data.durationSec)}` : ""}
+              {preview.data.title ? ". Revisa los datos de abajo." : ""}
+            </p>
+          )}
         </div>
-      )}
+      ) : null}
 
       <div>
         <label className="label" htmlFor="title">Título de la prédica</label>
@@ -163,7 +224,7 @@ export function UploadForm() {
           </div>
         </div>
       ) : (
-        <button type="submit" className="btn-primary w-full" disabled={mode === "file" ? !file : !link.trim()}>
+        <button type="submit" className="btn-primary w-full" disabled={mode === "file" ? !file : !link.trim() || preview.state === "loading" || preview.state === "error"}>
           {mode === "file" ? "Subir y analizar" : "Importar y analizar"}
         </button>
       )}

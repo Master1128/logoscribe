@@ -44,6 +44,11 @@ if (-not (Test-Path (Join-Path $bin "whisper-cli.exe"))) {
   Copy-Item (Join-Path $cli.DirectoryName "*") -Destination $bin -Recurse -Force
 }
 
+if (-not (Test-Path (Join-Path $bin "yt-dlp.exe"))) {
+  Write-Host "Descargando yt-dlp (para YouTube)..."
+  Invoke-WebRequest "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe" -OutFile (Join-Path $bin "yt-dlp.exe")
+}
+
 Write-Host "Instalando Logoscribe..."
 pnpm install
 if ($LASTEXITCODE -ne 0) { throw "Fallo pnpm install" }

@@ -5,19 +5,25 @@ import { tool } from "./tools";
 export function run(
   cmd: string,
   args: string[],
-  opts: { onStderr?: (line: string) => void; signal?: AbortSignal } = {},
+  opts: { onStderr?: (line: string) => void; onStdout?: (line: string) => void; signal?: AbortSignal } = {},
 ): Promise<string> {
   return new Promise((resolve, reject) => {
     const child = spawn(cmd, args, { stdio: ["ignore", "pipe", "pipe"], signal: opts.signal });
     let stdout = "";
     let stderrTail = "";
-    child.stdout.on("data", (d) => (stdout += d));
+    child.stdout.on("data", (d: Buffer) => {
+      const text = d.toString();
+      // Progress-only callers (yt-dlp) don't need the whole output kept.
+      if (opts.onStdout) for (const line of text.split(/\r|\n/)) { if (line.trim()) opts.onStdout(line); }
+      else stdout += text;
+    });
     child.stderr.on("data", (d: Buffer) => {
       const text = d.toString();
       stderrTail = (stderrTail + text).slice(-4000);
       if (opts.onStderr) for (const line of text.split(/\r|\n/)) if (line.trim()) opts.onStderr(line);
     });
-    child.on("error", reject);
+    child.on("error", (err: NodeJS.ErrnoException) =>
+      reject(err.code === "ENOENT" ? new Error(`ENOENT: no se encontró ${cmd}`) : err));
     child.on("close", (code) => {
       if (code === 0) resolve(stdout);
       else reject(new Error(`${cmd} terminó con código ${code}: ${stderrTail.trim().split("\n").slice(-5).join("\n")}`));

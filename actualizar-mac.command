@@ -18,6 +18,8 @@ else
 fi
 
 chmod +x ./*.command
+# yt-dlp needs frequent updates to keep up with YouTube; not fatal if it fails.
+brew upgrade yt-dlp 2>/dev/null || brew install yt-dlp || echo "Aviso: no se pudo actualizar yt-dlp (descargas de YouTube)."
 pnpm install
 pnpm build
 echo "=== Listo. Ya puedes abrir Logoscribe. ==="

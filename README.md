@@ -64,7 +64,10 @@ Las versiones anteriores usaban la carpeta `data` del proyecto; se mueve sola la
 
 ## Cómo se usa
 
-1. **Subir** el audio del culto (MP3, M4A, WAV…) o pegar el enlace compartido de OneDrive.
+1. **Agregar** la grabación del culto, de tres formas (en **Nueva prédica**):
+   - **Archivo:** sube el MP3, M4A, WAV…
+   - **Enlace:** pega un video de **YouTube**, un episodio del **podcast** (Spotify), un enlace directo a un audio o un archivo compartido de **OneDrive**. El título, la fecha, el predicador y la serie se llenan solos.
+   - **Podcast:** explora todos los episodios del podcast de la iglesia, búscalos e impórtalos con un clic; los que ya están en tu biblioteca aparecen marcados.
 2. La app separa voz de música y **propone dónde empieza y termina la prédica**.
 3. **Revisar el recorte** sobre la forma de onda: escuchar el inicio y el final, ajustar si hace falta.
 4. **Transcribir** ese tramo con Whisper en tu computador.

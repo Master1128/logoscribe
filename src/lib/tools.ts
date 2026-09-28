@@ -7,15 +7,21 @@
 import fs from "node:fs";
 import path from "node:path";
 
-export type Tool = "ffmpeg" | "ffprobe" | "whisper-cli";
+export type Tool = "ffmpeg" | "ffprobe" | "whisper-cli" | "yt-dlp";
 
-const ENV: Record<Tool, string> = { ffmpeg: "FFMPEG_PATH", ffprobe: "FFPROBE_PATH", "whisper-cli": "WHISPER_CLI_PATH" };
+const ENV: Record<Tool, string> = {
+  ffmpeg: "FFMPEG_PATH",
+  ffprobe: "FFPROBE_PATH",
+  "whisper-cli": "WHISPER_CLI_PATH",
+  "yt-dlp": "YTDLP_PATH",
+};
 
 /** Older whisper.cpp releases (and some Homebrew versions) named the binary differently. */
 const NAMES: Record<Tool, string[]> = {
   ffmpeg: ["ffmpeg"],
   ffprobe: ["ffprobe"],
   "whisper-cli": ["whisper-cli", "whisper-cpp"],
+  "yt-dlp": ["yt-dlp"],
 };
 
 const EXTRA_DIRS = process.platform === "darwin" ? ["/opt/homebrew/bin", "/usr/local/bin"] : [];

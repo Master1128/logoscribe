@@ -1,4 +1,4 @@
-import { isOneDriveUrl } from "@/lib/onedrive";
+import { detectKind } from "@/lib/sources";
 import { createSermon, enqueue, listSermons, searchSermons, setStatus } from "@/lib/repo";
 
 export async function GET(request: Request) {
@@ -13,8 +13,8 @@ export async function POST(request: Request) {
   if (!title) return Response.json({ error: "El título es obligatorio" }, { status: 400 });
   const clean = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : null);
   const sourceUrl = clean(body.source_url);
-  if (sourceUrl && !isOneDriveUrl(sourceUrl)) {
-    return Response.json({ error: "Pega un enlace compartido de OneDrive o SharePoint (https://1drv.ms/…)" }, { status: 400 });
+  if (sourceUrl && !detectKind(sourceUrl)) {
+    return Response.json({ error: "Usa un enlace de YouTube, del podcast, de OneDrive o de un archivo de audio" }, { status: 400 });
   }
   const sermon = createSermon({
     title,

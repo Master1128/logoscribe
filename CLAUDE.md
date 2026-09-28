@@ -11,6 +11,7 @@
 - Regla de producto: nunca reescribir lo que dijo el predicador. El organizador (heurística local o IA) solo devuelve índices de oración.
 - Organizador con IA multi-proveedor (`src/lib/providers.ts`, `src/lib/format.ts`): Claude por SDK de Anthropic; OpenAI, DeepSeek, Gemini, GLM y "custom" (Ollama/LiteLLM) por la API compatible con OpenAI en modo JSON (con reintento sin `response_format`). Claves en la tabla `settings` (`apiKey:<proveedor>`), nunca se devuelven completas al navegador.
 - No hay transcripción en la nube: se quitaron OpenAI/Groq para transcribir (quedan en el historial de git).
+- Fuentes de audio (`src/lib/sources.ts`): YouTube (yt-dlp, solo audio), podcast (página de Spotify/Anchor → feed RSS → episodio), audio directo y OneDrive. `previewSource` llena título/fecha/predicador/serie (predicador desde la descripción del episodio; serie desde "… No. N"). El feed se recuerda en `podcastFeedUrl`. yt-dlp lo instalan/actualizan los scripts de Mac y Windows.
 - Whisper alucina texto sobre música ("Amara.org", etc.): por eso existe el paso de revisión del recorte y `cleanSegments`.
 - Worker en dev usa `tsx watch --exclude "data/**"`; `node --watch` se reiniciaba en bucle con los archivos generados.
 - pdfkit va en `serverExternalPackages` (lee sus métricas de fuente desde disco).

@@ -15,8 +15,8 @@ if ! command -v brew >/dev/null 2>&1; then
   load_brew
 fi
 
-echo "Instalando ffmpeg y whisper.cpp…"
-brew install ffmpeg whisper-cpp
+echo "Instalando ffmpeg, whisper.cpp y yt-dlp…"
+brew install ffmpeg whisper-cpp yt-dlp
 if ! command -v whisper-cli >/dev/null 2>&1 && ! command -v whisper-cpp >/dev/null 2>&1; then
   echo "✗ whisper.cpp no quedó instalado. Ejecuta «brew install whisper-cpp» y comparte el mensaje que aparezca."
   exit 1

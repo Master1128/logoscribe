@@ -79,7 +79,7 @@ export function SermonView({ id }: { id: string }) {
 }
 
 const STEPS = [
-  { status: "importing", label: "Descargar de OneDrive" },
+  { status: "importing", label: "Descargar el audio" },
   { status: "analyzing", label: "Analizar el audio" },
   { status: "review", label: "Confirmar el recorte" },
   { status: "transcribing", label: "Transcribir la prédica" },

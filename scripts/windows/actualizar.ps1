@@ -19,6 +19,12 @@ if ((Test-Path (Join-Path $root ".git")) -and (Get-Command git -ErrorAction Sile
   Remove-Item $tmp -Recurse -Force
 }
 
+# yt-dlp needs frequent updates to keep up with YouTube; not fatal if it fails.
+$ytdlp = Join-Path $root "tools\bin\yt-dlp.exe"
+if (Test-Path $ytdlp) { & $ytdlp -U | Out-Host } else {
+  try { Invoke-WebRequest "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe" -OutFile $ytdlp } catch { Write-Host "Aviso: no se pudo descargar yt-dlp." }
+}
+
 pnpm install
 if ($LASTEXITCODE -ne 0) { throw "Fallo pnpm install" }
 pnpm build

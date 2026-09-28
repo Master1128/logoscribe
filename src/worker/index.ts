@@ -66,6 +66,7 @@ function reportSetup() {
       ? `✓ Modelo de transcripción: ${path.basename(settings.localModelPath)}`
       : "✗ Falta el modelo de transcripción: descárgalo en Ajustes",
     fs.existsSync(settings.localVadModelPath) ? "✓ Detector de voz" : "· Detector de voz: se descarga junto con el modelo",
+    path.isAbsolute(tool("yt-dlp")) ? `✓ yt-dlp para YouTube (${tool("yt-dlp")})` : "· Falta yt-dlp: sin él no se puede importar de YouTube (ejecuta el actualizador)",
   ];
   console.log(["", "Logoscribe — estado de la instalación", ...lines.map((l) => `  ${l}`), ""].join("\n"));
 }

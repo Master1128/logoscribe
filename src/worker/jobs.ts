@@ -2,8 +2,7 @@
 import fs from "node:fs";
 import { probeDuration, transcodePreview } from "@/lib/audio";
 import { analyzeAudio } from "@/lib/detect";
-import { downloadShared } from "@/lib/onedrive";
-import path from "node:path";
+import { downloadSource } from "@/lib/sources";
 import { organize } from "@/lib/format";
 import { sermonFiles } from "@/lib/paths";
 import {
@@ -23,21 +22,14 @@ function reporter(job: Job) {
   };
 }
 
-const AUDIO_EXT = /\.(mp3|m4a|aac|wav|flac|ogg|opus|wma|mp4|webm|amr|3gp)$/i;
-
 async function importAudio(job: Job, signal: AbortSignal) {
   const sermon = getSermon(job.sermon_id)!;
   const files = sermonFiles(sermon.id);
   setStatus(sermon.id, "importing");
   fs.mkdirSync(files.dir, { recursive: true });
   const progress = reporter(job);
-  progress(0, "Descargando el audio de OneDrive");
-  const { path: dest, fileName } = await downloadShared(
-    sermon.source_url!,
-    (name) => path.join(files.dir, `source${AUDIO_EXT.test(name) ? path.extname(name).toLowerCase() : ".mp3"}`),
-    (f) => progress(f, "Descargando el audio de OneDrive"),
-    signal,
-  );
+  progress(0, "Descargando el audio");
+  const { path: dest, fileName } = await downloadSource(sermon.source_url!, files.dir, progress, signal);
   updateSermon(sermon.id, { source_path: dest, source_name: sermon.source_name ?? fileName });
   setStatus(sermon.id, "uploaded");
   enqueue(sermon.id, "analyze");

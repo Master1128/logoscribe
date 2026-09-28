@@ -17,6 +17,8 @@ export interface Settings {
   /** Only used by the "custom" provider (Ollama, LiteLLM, …). */
   organizerBaseUrl: string;
   addHeadings: boolean;
+  /** RSS feed of the church's podcast, remembered from the first podcast link. */
+  podcastFeedUrl: string;
   autoTranscribe: boolean;
   /** Shortest speech run proposed as the sermon by the detector. */
   minSermonMinutes: number;
@@ -34,6 +36,7 @@ export const DEFAULT_SETTINGS: Settings = {
   organizerModel: "",
   organizerBaseUrl: "",
   addHeadings: true,
+  podcastFeedUrl: "",
   autoTranscribe: false,
   minSermonMinutes: 8,
 };
