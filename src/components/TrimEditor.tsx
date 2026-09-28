@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import type WaveSurfer from "wavesurfer.js";
 import type { Region as WsRegion } from "wavesurfer.js/dist/plugins/regions.esm.js";
 import Link from "next/link";
+import { musicInside } from "@/lib/music";
 import { api, formatTime } from "@/lib/ui";
 import type { Region, Sermon } from "@/lib/types";
 
@@ -12,6 +13,7 @@ interface Waveform {
   peaks: number[];
   regions: Region[];
   sermon: { start: number; end: number } | null;
+  kind: "service" | "message";
 }
 
 interface Readiness {
@@ -53,6 +55,7 @@ export function TrimEditor({ sermon, onChange }: { sermon: Sermon; onChange: () 
   const [time, setTime] = useState(0);
   const [zoom, setZoom] = useState(0);
   const [ready, setReady] = useState<Readiness | null>(null);
+  const [skipChoice, setSkipChoice] = useState<boolean | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -159,6 +162,10 @@ export function TrimEditor({ sermon, onChange }: { sermon: Sermon; onChange: () 
       return next.end - next.start >= 5 ? next : r;
     });
 
+  const songs = wave ? musicInside(wave.regions, range.start, range.end) : [];
+  const skipMusic = skipChoice ?? (sermon.skip_music === null ? wave?.kind === "message" : sermon.skip_music === 1);
+  const setSkipMusic = (v: boolean) => setSkipChoice(v);
+
   const listen = (from: number, seconds: number) => {
     const w = ws.current;
     if (!w) return;
@@ -173,7 +180,7 @@ export function TrimEditor({ sermon, onChange }: { sermon: Sermon; onChange: () 
     try {
       await api(`/api/sermons/${sermon.id}`, {
         method: "PATCH",
-        body: JSON.stringify({ trim_start: range.start, trim_end: range.end }),
+        body: JSON.stringify({ trim_start: range.start, trim_end: range.end, skip_music: songs.length ? skipMusic : null }),
       });
       await api(`/api/sermons/${sermon.id}/actions`, { method: "POST", body: JSON.stringify({ action: "transcribe" }) });
       onChange();
@@ -188,8 +195,10 @@ export function TrimEditor({ sermon, onChange }: { sermon: Sermon; onChange: () 
     <div className="space-y-4">
       <div className="card p-4">
         <p className="mb-3 text-sm">
-          {wave?.sermon ? (
-            <>La app marcó la prédica automáticamente. <strong>Escucha el inicio y el final</strong> y ajusta si hace falta: arrastra los bordes del recuadro azul o usa los botones.</>
+          {wave?.sermon && wave.kind === "message" ? (
+            <>Parece un <strong>podcast o devocional</strong>: se marcó desde la primera hasta la última palabra, sin la música de entrada y de cierre. <strong>Escucha el inicio y el final</strong> y ajusta si hace falta.</>
+          ) : wave?.sermon ? (
+            <>Parece un <strong>culto con alabanza</strong>: la app marcó la prédica. <strong>Escucha el inicio y el final</strong> y ajusta si hace falta: arrastra los bordes del recuadro azul o usa los botones.</>
           ) : wave ? (
             <>No se pudo detectar la prédica automáticamente. <strong>Arrastra los bordes del recuadro azul</strong> hasta el inicio y el final de la prédica.</>
           ) : (
@@ -241,6 +250,30 @@ export function TrimEditor({ sermon, onChange }: { sermon: Sermon; onChange: () 
           listenLabel="Escuchar los últimos 15 s"
         />
       </div>
+
+      {songs.length > 0 && (
+        <div className="card space-y-2 p-4 text-sm">
+          <label className="flex items-start gap-2">
+            <input type="checkbox" className="mt-1" checked={skipMusic} onChange={(e) => setSkipMusic(e.target.checked)} />
+            <span>
+              <strong>Omitir la música dentro del recorte</strong> ({songs.length === 1 ? "1 tramo" : `${songs.length} tramos`}):
+              no se transcribe, para que la letra de una canción no aparezca como parte del mensaje.
+              {wave?.kind === "service" && (
+                <span className="block text-xs text-muted">
+                  En los cultos viene desactivado: a veces el predicador habla sobre la música. Escucha los tramos antes de activarlo.
+                </span>
+              )}
+            </span>
+          </label>
+          <div className="flex flex-wrap gap-1.5 pl-6">
+            {songs.map((m) => (
+              <button key={m.start} type="button" className="btn-ghost px-2.5 py-1 text-xs tabular-nums" onClick={() => listen(m.start, 15)}>
+                ▶ {formatTime(m.start)}–{formatTime(m.end)}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="card flex flex-wrap items-end gap-4 p-4">
         {ready && !ready.ok && (

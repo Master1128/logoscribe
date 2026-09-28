@@ -121,6 +121,8 @@ function rewriteLegacyPaths(conn: DatabaseSync) {
 function migrate(conn: DatabaseSync) {
   const columns = new Set((conn.prepare("PRAGMA table_info(sermons)").all() as { name: string }[]).map((c) => c.name));
   if (!columns.has("source_url")) conn.exec("ALTER TABLE sermons ADD COLUMN source_url TEXT");
+  // 1 = leave music passages inside the trim out of the transcript, 0 = keep, NULL = automatic.
+  if (!columns.has("skip_music")) conn.exec("ALTER TABLE sermons ADD COLUMN skip_music INTEGER");
   // The in-browser engine was removed: send its sermons back to review.
   conn.exec(`UPDATE sermons SET status = CASE WHEN status = 'transcribing' THEN 'review' ELSE status END, engine = NULL
              WHERE engine = 'browser'`);

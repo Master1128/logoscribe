@@ -113,14 +113,41 @@ export async function analyzeAudio(
 
   const smoothed = majorityFilter(labels, 7);
   const regions = toRegions(smoothed, 8);
+
+  // A service recording has long stretches of worship; a podcast or
+  // devotional is mostly speech with, at most, music at the start, the end or
+  // a song in between.
+  const musicSec = regions.filter((r) => r.kind === "music").reduce((n, r) => n + r.end - r.start, 0);
+  const kind: Analysis["kind"] = musicSec / duration >= 0.25 ? "service" : "message";
+  // Short recordings (a 5-minute devotional) can't meet an 8-minute minimum.
+  const minSec = Math.min(minSermonSec, Math.max(60, duration * 0.5));
+  const picked =
+    kind === "service"
+      ? pickSermon(regions, bridgeGapSec, minSec) ?? pickSpokenSpan(regions)
+      : pickSpokenSpan(regions) ?? pickSermon(regions, bridgeGapSec, minSec);
+
   // Smoothing blurs boundaries by a few seconds; better to keep a little music
   // (the recognizer ignores it) than to lose the first or last words.
-  const picked = pickSermon(regions, bridgeGapSec, minSermonSec);
   const PAD = 4;
   const sermon = picked && { start: Math.max(0, picked.start - PAD), end: Math.min(duration, picked.end + PAD) };
 
-  return { analysis: { duration, energyDb, regions, sermon }, peaks };
+  return { analysis: { duration, energyDb, regions, sermon, kind }, peaks };
 }
+
+/**
+ * From the first to the last spoken passage of at least 20 s. Intro or outro
+ * music under 45 s is kept: hosts often greet over it, and Whisper skips music.
+ */
+function pickSpokenSpan(regions: Region[]) {
+  const spoken = regions.filter((r) => r.kind === "speech" && r.end - r.start >= 20);
+  if (!spoken.length) return null;
+  const duration = regions[regions.length - 1].end;
+  const start = spoken[0].start <= 45 ? 0 : spoken[0].start;
+  const lastEnd = spoken[spoken.length - 1].end;
+  return { start, end: duration - lastEnd <= 45 ? duration : lastEnd };
+}
+
+export { musicInside, SKIP_MUSIC_MIN_SEC } from "./music";
 
 function majorityFilter(labels: Region["kind"][], half: number): Region["kind"][] {
   return labels.map((_, i) => {

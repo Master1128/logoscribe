@@ -90,6 +90,8 @@ const HALLUCINATIONS = [
   /gracias por ver el v[ií]deo/i,
   /^\[?\(?m[uú]sica\)?\]?\.?$/i,
   /^[♪♫\s.]+$/,
+  // Invented over instrumental music (seen on several recordings).
+  /^la iglesia de jesucristo de los (santos de los )?[uú]ltimos d[ií]as\.?$/i,
 ];
 
 export function cleanSegments(segments: Segment[]): Segment[] {

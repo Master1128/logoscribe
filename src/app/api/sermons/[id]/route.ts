@@ -25,6 +25,7 @@ export async function PATCH(request: Request, ctx: RouteContext<"/api/sermons/[i
   for (const key of ["preacher", "series", "service_date"] as const) {
     if (key in body) patch[key] = text(body[key]);
   }
+  if ("skip_music" in body) patch.skip_music = body.skip_music === null ? null : body.skip_music ? 1 : 0;
   if ("trim_start" in body || "trim_end" in body) {
     const start = Number(body.trim_start ?? sermon.trim_start);
     const end = Number(body.trim_end ?? sermon.trim_end);

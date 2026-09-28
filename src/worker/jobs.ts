@@ -2,6 +2,7 @@
 import fs from "node:fs";
 import { probeDuration, transcodePreview } from "@/lib/audio";
 import { analyzeAudio } from "@/lib/detect";
+import { mostlyInside, musicInside } from "@/lib/music";
 import { downloadSource } from "@/lib/sources";
 import { organize } from "@/lib/format";
 import { sermonFiles } from "@/lib/paths";
@@ -10,7 +11,7 @@ import {
 } from "@/lib/repo";
 import { getSettings } from "@/lib/settings";
 import { transcribe } from "@/lib/transcribe";
-import type { Job } from "@/lib/types";
+import type { Analysis, Job } from "@/lib/types";
 
 function reporter(job: Job) {
   let last = 0;
@@ -91,7 +92,14 @@ async function runTranscription(job: Job, signal: AbortSignal) {
     signal,
   });
   signal.throwIfAborted();
-  saveSegments(sermon.id, segments);
+
+  // Songs inside the trim (a devotional's closing song…) aren't the message.
+  const analysis = JSON.parse(fs.readFileSync(files.analysis, "utf8")) as Analysis;
+  const skip = sermon.skip_music ?? (analysis.kind === "message" ? 1 : 0);
+  const songs = skip ? musicInside(analysis.regions, sermon.trim_start ?? 0, sermon.trim_end ?? sermon.duration!) : [];
+  const kept = segments.filter((s) => !mostlyInside(s, songs));
+
+  saveSegments(sermon.id, kept);
   fs.rmSync(files.work, { recursive: true, force: true });
   enqueue(sermon.id, "format");
 }

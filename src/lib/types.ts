@@ -28,6 +28,8 @@ export interface Sermon {
   detected_start: number | null;
   detected_end: number | null;
   engine: EngineId | null;
+  /** Leave songs inside the trim out of the transcript; null = automatic (on for podcasts/devotionals). */
+  skip_music: 0 | 1 | null;
   error: string | null;
   created_at: string;
   updated_at: string;
@@ -68,4 +70,10 @@ export interface Analysis {
   energyDb: number[];
   regions: Region[];
   sermon: { start: number; end: number } | null;
+  /**
+   * "service": worship + sermon, the sermon is the longest speech block.
+   * "message": podcast, devotional… mostly speech, maybe intro/outro music;
+   * everything from the first to the last spoken passage.
+   */
+  kind?: "service" | "message";
 }

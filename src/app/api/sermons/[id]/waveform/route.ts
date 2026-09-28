@@ -9,5 +9,11 @@ export async function GET(_req: Request, ctx: RouteContext<"/api/sermons/[id]/wa
   if (!fs.existsSync(files.analysis)) return Response.json({ error: "Análisis pendiente" }, { status: 404 });
   const analysis = JSON.parse(fs.readFileSync(files.analysis, "utf8")) as Analysis;
   const peaks = JSON.parse(fs.readFileSync(files.peaks, "utf8")) as number[];
-  return Response.json({ duration: analysis.duration, regions: analysis.regions, sermon: analysis.sermon, peaks });
+  return Response.json({
+    duration: analysis.duration,
+    regions: analysis.regions,
+    sermon: analysis.sermon,
+    kind: analysis.kind ?? "service",
+    peaks,
+  });
 }

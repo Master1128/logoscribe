@@ -32,7 +32,7 @@ export function createSermon(
 }
 
 const EDITABLE = ["title", "preacher", "series", "service_date", "trim_start", "trim_end", "engine", "status", "error",
-  "duration", "detected_start", "detected_end", "source_path", "source_name"] as const;
+  "duration", "detected_start", "detected_end", "source_path", "source_name", "skip_music"] as const;
 type Editable = (typeof EDITABLE)[number];
 
 export function updateSermon(id: string, patch: Partial<Pick<Sermon, Editable>>) {

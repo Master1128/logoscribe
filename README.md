@@ -68,7 +68,7 @@ Las versiones anteriores usaban la carpeta `data` del proyecto; se mueve sola la
    - **Archivo:** sube el MP3, M4A, WAV…
    - **Enlace:** pega un video de **YouTube**, un episodio del **podcast** (Spotify), un enlace directo a un audio o un archivo compartido de **OneDrive**. El título, la fecha, el predicador y la serie se llenan solos.
    - **Podcast:** explora todos los episodios del podcast de la iglesia, búscalos e impórtalos con un clic; los que ya están en tu biblioteca aparecen marcados.
-2. La app separa voz de música y **propone dónde empieza y termina la prédica**.
+2. La app separa voz de música y **propone dónde empieza y termina la prédica**. Distingue dos tipos de audio: un **culto** (alabanza + prédica: marca la prédica) y un **mensaje** como un podcast o devocional (desde la primera hasta la última palabra, sin la música de entrada y de cierre; las canciones que haya en medio se pueden omitir de la transcripción).
 3. **Revisar el recorte** sobre la forma de onda: escuchar el inicio y el final, ajustar si hace falta.
 4. **Transcribir** ese tramo con Whisper en tu computador.
 5. Se organiza en **párrafos sin cambiar ninguna palabra** (ver abajo).
